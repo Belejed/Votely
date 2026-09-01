@@ -94,11 +94,12 @@ export default async function PrintVotersPage({
       voters={serializedVoters} 
       layout={layout} 
       orgName={org.name} 
+      logoUrl={org.logoUrl || null}
       slug={slug}
       initialClassFilter={classFilter || 'ALL'}
       availableClasses={availableClasses}
       eventName={activeEvent?.name || 'Votely General Election'}
-      eventDate={activeEvent?.startDate ? new Date(activeEvent.startDate).toLocaleDateString() : 'Active Voting Period'}
+      eventDate={activeEvent?.startDate ? new Date(activeEvent.startDate).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Hari Pelaksanaan'}
     />
   );
 }
