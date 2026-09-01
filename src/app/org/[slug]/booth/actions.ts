@@ -3,6 +3,7 @@
 import { db } from '@/lib/db';
 import { setVoterSession, getVoterSession, clearVoterSession } from '@/lib/session';
 import { headers } from 'next/headers';
+import { checkRateLimit } from '@/lib/rate-limit';
 
 export async function authenticateVoterAction(
   slug: string,
@@ -10,6 +11,12 @@ export async function authenticateVoterAction(
   credentials: { qrToken?: string; studentId?: string; votingPass?: string }
 ) {
   try {
+    const headersList = await headers();
+    const ip = headersList.get('x-forwarded-for') || headersList.get('x-real-ip') || '127.0.0.1';
+    const rl = checkRateLimit(`voter_auth:${ip}`, 15, 60);
+    if (!rl.success) {
+      return { error: `Terlalu banyak percobaan login pemilih. Harap tunggu ${rl.resetSeconds} detik.` };
+    }
     // 1. Fetch organization
     const org = await db.organization.findUnique({
       where: { slug }
