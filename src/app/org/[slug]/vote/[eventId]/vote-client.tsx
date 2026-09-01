@@ -25,6 +25,7 @@ interface CandidateProps {
   id: string;
   number: number;
   name: string;
+  category?: string | null;
   vision: string;
   mission: string;
   socialMedia: any;
@@ -69,43 +70,57 @@ export default function VoteClientPage({ event, candidates, slug, orgName, logoU
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProps | null>(null);
   const [selectedCandidates, setSelectedCandidates] = useState<CandidateProps[]>([]);
 
-  const isMultiVote = Boolean(event.multipleCandidate && (event.maxVotes || 2) > 1);
-  const maxVotes = event.maxVotes || 2;
+  // Detect distinct categories (e.g. OSIS, MPK)
+  const categoriesList = Array.from(new Set(candidates.map((c) => (c.category || 'OSIS'))));
+  const hasMultipleCategories = categoriesList.length > 1;
 
-  const handleToggleCandidate = (candidate: CandidateProps) => {
-    if (!isMultiVote) {
-      handleSelectCandidate(candidate);
-      return;
-    }
+  // Selected candidate per category: { "OSIS": cand, "MPK": cand }
+  const [selectedByCat, setSelectedByCat] = useState<Record<string, CandidateProps>>({});
 
-    setSelectedCandidates((prev) => {
-      const exists = prev.some((c) => c.id === candidate.id);
-      if (exists) {
-        return prev.filter((c) => c.id !== candidate.id);
+  const handleSelectCandidateForCategory = (candidate: CandidateProps) => {
+    const cat = candidate.category || 'OSIS';
+    setSelectedByCat((prev) => ({
+      ...prev,
+      [cat]: candidate
+    }));
+
+    if (!hasMultipleCategories) {
+      setSelectedCandidate(candidate);
+      if (event.voteConfirmation) {
+        setVoteState('CONFIRMATION');
       } else {
-        if (prev.length >= maxVotes) {
-          // Replace the oldest selection or keep at max
-          return [...prev.slice(1), candidate];
-        }
-        return [...prev, candidate];
+        handleCastVote(candidate.id);
       }
-    });
-  };
-
-  const handleProceedMultiConfirmation = () => {
-    if (selectedCandidates.length === 0) return;
-    if (event.voteConfirmation) {
-      setVoteState('CONFIRMATION');
-    } else {
-      handleCastMultipleVotes();
     }
   };
 
-  const handleCastMultipleVotes = async () => {
-    if (!activeVoter || selectedCandidates.length === 0) return;
+  const isAllCategoriesChosen = hasMultipleCategories
+    ? categoriesList.every((cat) => selectedByCat[cat])
+    : Object.keys(selectedByCat).length > 0;
+
+  const handleProceedToConfirmation = () => {
+    if (hasMultipleCategories) {
+      if (!isAllCategoriesChosen) return;
+      if (event.voteConfirmation) {
+        setVoteState('CONFIRMATION');
+      } else {
+        handleCastAllVotes();
+      }
+    } else {
+      const chosen = Object.values(selectedByCat)[0];
+      if (!chosen) return;
+      handleSelectCandidate(chosen);
+    }
+  };
+
+  const handleCastAllVotes = async () => {
+    if (!activeVoter) return;
+    const chosenList = Object.values(selectedByCat);
+    if (chosenList.length === 0) return;
+
     setErrorMsg(null);
     startTransition(async () => {
-      const candidateIds = selectedCandidates.map((c) => c.id);
+      const candidateIds = chosenList.map((c) => c.id);
       const res = await castVoteAction(slug, event.id, candidateIds, activeVoter.id);
       if (res?.error) {
         setErrorMsg(res.error);

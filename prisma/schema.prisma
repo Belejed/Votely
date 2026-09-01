@@ -166,6 +166,7 @@ model Candidate {
   number      Int
   name        String
   photoUrl    String?  @map("photo_url")
+  category    String?  @default("OSIS")
   vision      String
   mission     String
   socialMedia Json?    @map("social_media") // e.g. { "instagram": "@username" }

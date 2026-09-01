@@ -36,6 +36,7 @@ interface CandidateProps {
   id: string;
   number: number;
   name: string;
+  category?: string | null;
   photoUrl: string | null;
   vision: string | null;
   mission: string | null;
@@ -83,6 +84,8 @@ export default function ActiveElectionClient({
   // Edit Candidate Modal State
   const [editingCandidate, setEditingCandidate] = useState<any | null>(null);
   const [editName, setEditName] = useState('');
+  const [editCategory, setEditCategory] = useState('OSIS');
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('ALL');
   const [editVision, setEditVision] = useState('');
   const [editMission, setEditMission] = useState('');
   const [editPhotoUrl, setEditPhotoUrl] = useState<string | null>(null);
@@ -120,6 +123,7 @@ export default function ActiveElectionClient({
   const openEditCandidateModal = (cand: any) => {
     setEditingCandidate(cand);
     setEditName(cand.name);
+    setEditCategory(cand.category || 'OSIS');
     setEditVision(cand.vision || '');
     setEditMission(cand.mission || '');
     setEditPhotoUrl(cand.photoUrl || null);
@@ -131,6 +135,7 @@ export default function ActiveElectionClient({
     startTransition(async () => {
       const res = await updateCandidateDetailsAction(editingCandidate.id, slug, {
         name: editName,
+        category: editCategory,
         vision: editVision,
         mission: editMission,
         photoUrl: editPhotoUrl,
@@ -535,13 +540,43 @@ export default function ActiveElectionClient({
 
       {/* Candidate Roster Cards */}
       <div className="space-y-4 pt-2">
-        <h4 className="text-sm font-black uppercase tracking-wider text-text-muted flex items-center gap-2">
-          <Users className="w-4 h-4 text-brand-primary" />
-          <span>Daftar Pasangan Calon & Hasil Sementara ({candidates.length})</span>
-        </h4>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h4 className="text-sm font-black uppercase tracking-wider text-text-muted flex items-center gap-2">
+            <Users className="w-4 h-4 text-brand-primary" />
+            <span>Daftar Paslon ({candidates.length})</span>
+          </h4>
+
+          {/* Category Filter Tabs */}
+          <div className="flex items-center gap-1.5 bg-card p-1 rounded-2xl border border-border-main text-xs font-bold">
+            <button
+              onClick={() => setActiveCategoryFilter('ALL')}
+              className={`px-3 py-1.5 rounded-xl transition-all ${
+                activeCategoryFilter === 'ALL' ? 'bg-brand-primary text-white shadow-xs' : 'text-text-muted hover:text-text-main'
+              }`}
+            >
+              Semua ({candidates.length})
+            </button>
+            <button
+              onClick={() => setActiveCategoryFilter('OSIS')}
+              className={`px-3 py-1.5 rounded-xl transition-all ${
+                activeCategoryFilter === 'OSIS' ? 'bg-brand-primary text-white shadow-xs' : 'text-text-muted hover:text-text-main'
+              }`}
+            >
+              🗳️ OSIS ({candidates.filter(c => (c.category || 'OSIS') === 'OSIS').length})
+            </button>
+            <button
+              onClick={() => setActiveCategoryFilter('MPK')}
+              className={`px-3 py-1.5 rounded-xl transition-all ${
+                activeCategoryFilter === 'MPK' ? 'bg-emerald-600 text-white shadow-xs' : 'text-text-muted hover:text-text-main'
+              }`}
+            >
+              🏛️ MPK ({candidates.filter(c => c.category === 'MPK').length})
+            </button>
+          </div>
+        </div>
 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {candidates.map((cand) => (
+          {candidates.filter(c => activeCategoryFilter === 'ALL' || (activeCategoryFilter === 'OSIS' ? (c.category || 'OSIS') === 'OSIS' : c.category === 'MPK')).map((cand) => (
             <Card key={cand.id} className="p-5 bg-card border-border-main rounded-3xl space-y-4 relative overflow-hidden shadow-xs">
               <div className="flex items-center gap-3.5">
                 {cand.photoUrl ? (
@@ -553,9 +588,16 @@ export default function ActiveElectionClient({
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center justify-between gap-1">
-                    <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider block">
-                      Paslon #{cand.number}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider block">
+                        Paslon #{cand.number}
+                      </span>
+                      <span className={`text-[9px] font-black px-1.5 py-0.2 rounded-md uppercase ${
+                        cand.category === 'MPK' ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/20' : 'bg-brand-primary/10 text-brand-primary border border-brand-primary/20'
+                      }`}>
+                        {cand.category || 'OSIS'}
+                      </span>
+                    </div>
                     {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
                       <label className="cursor-pointer text-[10px] font-bold text-brand-primary hover:underline">
                         <span>{cand.photoUrl ? 'Ganti Foto' : '+ Pasang Foto'}</span>
@@ -641,6 +683,34 @@ export default function ActiveElectionClient({
               </div>
 
               <div className="space-y-4">
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Kategori Pemilihan</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setEditCategory('OSIS')}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        editCategory === 'OSIS'
+                          ? 'bg-brand-primary/10 border-brand-primary text-brand-primary'
+                          : 'bg-background border-border-main text-text-muted hover:border-brand-primary/50'
+                      }`}
+                    >
+                      🗳️ Kategori OSIS
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setEditCategory('MPK')}
+                      className={`py-2.5 px-3 rounded-xl border text-xs font-bold transition-all cursor-pointer ${
+                        editCategory === 'MPK'
+                          ? 'bg-emerald-500/10 border-emerald-500 text-emerald-600'
+                          : 'bg-background border-border-main text-text-muted hover:border-emerald-500/50'
+                      }`}
+                    >
+                      🏛️ Kategori MPK
+                    </button>
+                  </div>
+                </div>
+
                 <Input
                   label="Nama Lengkap Paslon / Kandidat"
                   value={editName}

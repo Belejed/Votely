@@ -90,6 +90,7 @@ export default async function ActiveElectionPage({
       id: cand.id,
       number: cand.number || idx + 1,
       name: cand.name,
+      category: cand.category || 'OSIS',
       photoUrl: cand.photoUrl || null,
       vision: cand.vision || null,
       mission: cand.mission || null,

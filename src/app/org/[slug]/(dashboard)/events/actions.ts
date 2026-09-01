@@ -113,6 +113,7 @@ export async function createEventAction(slug: string, wizardData: any) {
           number: index + 1,
           name: c.name,
           photoUrl: c.photoUrl || null,
+          category: c.category || 'OSIS',
           vision: c.vision || '',
           mission: c.mission || '',
           socialMedia: c.socialMedia || {},
@@ -355,7 +356,7 @@ export async function closeEventAction(eventId: string, slug: string) {
 export async function updateCandidateDetailsAction(
   candidateId: string,
   slug: string,
-  data: { name: string; vision: string; mission: string; photoUrl?: string | null }
+  data: { name: string; vision: string; mission: string; photoUrl?: string | null; category?: string | null }
 ) {
   const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
   if (auth.error || !auth.org || !auth.session) return { error: auth.error };
@@ -382,6 +383,7 @@ export async function updateCandidateDetailsAction(
         vision: data.vision,
         mission: data.mission,
         photoUrl: data.photoUrl !== undefined ? data.photoUrl : candidate.photoUrl,
+        category: data.category !== undefined ? (data.category || 'OSIS') : (candidate.category || 'OSIS'),
       }
     });
 
