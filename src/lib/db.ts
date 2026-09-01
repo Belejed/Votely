@@ -26,6 +26,7 @@ function getNormalizedDatabaseUrl(): string | undefined {
 try {
   const normalizedUrl = getNormalizedDatabaseUrl();
   if (normalizedUrl) {
+    process.env.DATABASE_URL = normalizedUrl;
     prismaInstance = globalForPrisma.prisma || new PrismaClient({
       datasources: {
         db: { url: normalizedUrl }
