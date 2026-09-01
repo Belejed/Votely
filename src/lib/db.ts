@@ -35,6 +35,14 @@ function objectToSnake(obj: any): any {
   return obj;
 }
 
+const TABLES_WITH_CREATED_AT = new Set([
+  'announcements', 'audit_logs', 'candidates', 'events', 'organizations', 'users', 'voters'
+]);
+
+const TABLES_WITH_UPDATED_AT = new Set([
+  'candidates', 'events', 'organizations', 'users', 'voters'
+]);
+
 const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'startDate', 'endDate', 'votedAt', 'timestamp']);
 
 function objectToCamel(obj: any): any {
@@ -154,12 +162,17 @@ class SupabaseModelAdapter {
   async create(args: { data: any }) {
     const id = args.data.id || crypto.randomUUID();
     const now = new Date().toISOString();
-    const payload = {
+    const payload: any = {
       ...args.data,
       id,
-      createdAt: args.data.createdAt ? new Date(args.data.createdAt).toISOString() : now,
-      updatedAt: args.data.updatedAt ? new Date(args.data.updatedAt).toISOString() : now,
     };
+
+    if (TABLES_WITH_CREATED_AT.has(this.tableName)) {
+      payload.createdAt = args.data.createdAt ? new Date(args.data.createdAt).toISOString() : now;
+    }
+    if (TABLES_WITH_UPDATED_AT.has(this.tableName)) {
+      payload.updatedAt = args.data.updatedAt ? new Date(args.data.updatedAt).toISOString() : now;
+    }
 
     const snakePayload = objectToSnake(payload);
     const { data, error } = await supabase.from(this.tableName).insert(snakePayload).select().single();
@@ -172,12 +185,19 @@ class SupabaseModelAdapter {
 
   async createMany(args: { data: any[] }) {
     const now = new Date().toISOString();
-    const payloads = args.data.map(item => ({
-      ...item,
-      id: item.id || crypto.randomUUID(),
-      createdAt: item.createdAt ? new Date(item.createdAt).toISOString() : now,
-      updatedAt: item.updatedAt ? new Date(item.updatedAt).toISOString() : now,
-    }));
+    const payloads = args.data.map(item => {
+      const p: any = {
+        ...item,
+        id: item.id || crypto.randomUUID(),
+      };
+      if (TABLES_WITH_CREATED_AT.has(this.tableName)) {
+        p.createdAt = item.createdAt ? new Date(item.createdAt).toISOString() : now;
+      }
+      if (TABLES_WITH_UPDATED_AT.has(this.tableName)) {
+        p.updatedAt = item.updatedAt ? new Date(item.updatedAt).toISOString() : now;
+      }
+      return p;
+    });
 
     const snakePayloads = objectToSnake(payloads);
     const { data, error } = await supabase.from(this.tableName).insert(snakePayloads).select();
@@ -190,10 +210,10 @@ class SupabaseModelAdapter {
 
   async update(args: { where: any; data: any }) {
     const now = new Date().toISOString();
-    const payload = {
-      ...args.data,
-      updatedAt: now,
-    };
+    const payload: any = { ...args.data };
+    if (TABLES_WITH_UPDATED_AT.has(this.tableName)) {
+      payload.updatedAt = now;
+    }
 
     const snakePayload = objectToSnake(payload);
     let query = supabase.from(this.tableName).update(snakePayload);
@@ -209,10 +229,10 @@ class SupabaseModelAdapter {
 
   async updateMany(args: { where?: any; data: any }) {
     const now = new Date().toISOString();
-    const payload = {
-      ...args.data,
-      updatedAt: now,
-    };
+    const payload: any = { ...args.data };
+    if (TABLES_WITH_UPDATED_AT.has(this.tableName)) {
+      payload.updatedAt = now;
+    }
 
     const snakePayload = objectToSnake(payload);
     let query = supabase.from(this.tableName).update(snakePayload);
