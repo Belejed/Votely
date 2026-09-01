@@ -463,7 +463,7 @@ export default function ActiveElectionClient({
                     <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider block">
                       Paslon #{cand.number}
                     </span>
-                    {userRole !== 'OBSERVER' && (
+                    {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
                       <label className="cursor-pointer text-[10px] font-bold text-brand-primary hover:underline">
                         <span>{cand.photoUrl ? 'Ganti Foto' : '+ Pasang Foto'}</span>
                         <input type="file" accept="image/*" onChange={(e) => handleQuickPhotoUpload(cand.id, e)} className="hidden" />
@@ -502,7 +502,7 @@ export default function ActiveElectionClient({
               </div>
 
               {/* Edit Candidate Button */}
-              {userRole !== 'OBSERVER' && (
+              {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
                 <div className="pt-1">
                   <Button
                     variant="outline"

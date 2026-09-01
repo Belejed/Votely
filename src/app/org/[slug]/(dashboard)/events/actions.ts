@@ -216,6 +216,9 @@ export async function deleteEventAction(eventId: string, slug: string) {
 export async function updateCandidatePhotoAction(candidateId: string, photoUrl: string, slug: string) {
   const session = await getAdminSession();
   if (!session) return { error: 'Unauthorized.' };
+  if (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
+    return { error: 'Unauthorized: Hanya Role Admin yang memiliki wewenang mengubah foto kandidat.' };
+  }
 
   try {
     const org = await db.organization.findUnique({ where: { slug } });
@@ -370,6 +373,9 @@ export async function updateCandidateDetailsAction(
 ) {
   const session = await getAdminSession();
   if (!session) return { error: 'Unauthorized.' };
+  if (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
+    return { error: 'Unauthorized: Hanya Role Admin yang memiliki wewenang mengedit data profil kandidat.' };
+  }
 
   const org = await db.organization.findUnique({ where: { slug } });
   if (!org) return { error: 'Organization not found.' };
