@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || '';
   const path = url.pathname;
 
-  // Skip static files, API routes, and Next.js internals
+  // Skip static files, API routes, Next.js internals, and public root routes
   if (
     path.startsWith('/_next') ||
     path.startsWith('/api') ||
@@ -17,58 +17,54 @@ export async function middleware(req: NextRequest) {
     return NextResponse.next();
   }
 
-  // Detect subdomain/tenant
-  // Local development hostnames: localhost:3000, school-a.localhost:3000
-  // Production hostnames: votely.app, school-a.votely.app
-  let hostnameParts = hostname.split('.');
-  
-  // Clean port numbers if they exist (e.g., localhost:3000)
-  hostnameParts = hostnameParts.map((p: any) => p.split(':')[0]);
+  // Never rewrite root public paths
+  const isPublicRootPath = 
+    path === '/' || 
+    path === '/login' || 
+    path === '/signup' || 
+    path.startsWith('/superadmin');
 
+  // Detect subdomain/tenant for custom domains (e.g., sman71.votely.id or sman71.localhost:3000)
+  // Do NOT treat vercel.app default project names (e.g. votely-sooty.vercel.app) as subdomains
   let subdomain: string | null = null;
+  const isVercelApp = hostname.endsWith('.vercel.app');
 
-  if (hostnameParts.length > 1) {
-    // For localhost: ["school-a", "localhost"]
-    // For production: ["school-a", "votely", "app"]
-    const firstPart = hostnameParts[0];
-    if (firstPart !== 'localhost' && firstPart !== 'www' && firstPart !== 'votely') {
-      subdomain = firstPart;
+  if (!isVercelApp) {
+    let hostnameParts = hostname.split('.').map((p: string) => p.split(':')[0]);
+    if (hostnameParts.length > 1) {
+      const firstPart = hostnameParts[0];
+      if (firstPart !== 'localhost' && firstPart !== 'www' && firstPart !== 'votely' && firstPart !== '127') {
+        subdomain = firstPart;
+      }
     }
   }
 
-  // Rewrite subdomain requests to organization routes
-  // e.g., school-a.localhost:3000/dashboard -> /org/school-a/dashboard
-  if (subdomain && !path.startsWith('/org/')) {
+  // Rewrite subdomain requests to organization routes only if not already under /org/ and not a public path
+  if (subdomain && !isPublicRootPath && !path.startsWith('/org/')) {
     url.pathname = `/org/${subdomain}${path}`;
     return NextResponse.rewrite(url);
   }
 
   // Route Protection & Session Checks
-  // Admin Routes (either direct /org/[slug]/dashboard or rewritten /dashboard)
-  const isAdminDashboard = path.includes('/dashboard') || path.includes('/events') || path.includes('/voters');
+  const isAdminDashboard = path.includes('/dashboard') || path.includes('/events') || path.includes('/voters') || path.includes('/active-election') || path.includes('/livecount');
   const isSuperAdmin = path.startsWith('/superadmin');
 
   if (isAdminDashboard) {
     const adminToken = req.cookies.get('votely_admin_session')?.value;
     if (!adminToken) {
-      // Redirect to login
-      const loginUrl = new URL('/login', req.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/login', req.url));
     }
     
     const adminSession = await decrypt<AdminSession>(adminToken);
     if (!adminSession) {
-      const loginUrl = new URL('/login', req.url);
-      return NextResponse.redirect(loginUrl);
+      return NextResponse.redirect(new URL('/login', req.url));
     }
 
-    // Check tenant boundary
-    // If accessing via /org/[slug]/dashboard, ensure it matches their session organization
+    // Check tenant boundary if accessing via /org/[slug]/*
     const orgPathMatch = path.match(/^\/org\/([^/]+)/);
     if (orgPathMatch) {
       const pathOrg = orgPathMatch[1];
       if (adminSession.role !== 'SUPER_ADMIN' && adminSession.organizationSlug !== pathOrg) {
-        // Forbidden - trying to access another organization's workspace
         return new NextResponse('Unauthorized tenant access', { status: 403 });
       }
     }
@@ -90,13 +86,6 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - api (API routes)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
