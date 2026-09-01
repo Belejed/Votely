@@ -2,7 +2,7 @@
 
 > **Modern, Multi-Tenant Electronic Voting (E-Voting) Platform** designed for Schools, Universities, and Organizations. Built with Next.js 16, TypeScript, Tailwind CSS, and Supabase PostgreSQL.
 
-![Votely Banner](https://images.unsplash.com/photo-1540910419892-4a36d2c3266c?q=80&w=1200&auto=format&fit=crop)
+![Votely Executive Dashboard](docs/images/dashboard-overview.png)
 
 ---
 
