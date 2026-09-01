@@ -16,7 +16,10 @@ import {
   MapPin,
   ShieldCheck,
   UserCheck,
-  Sparkles
+  Sparkles,
+  Settings2,
+  ChevronRight,
+  Eye
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -158,108 +161,134 @@ export default function PrintClientPage({
         `
       }} />
 
-      {/* TOP FLOATING CONTROLS TOOLBAR (Hidden on Print) */}
-      <div className="no-print bg-slate-950/90 backdrop-blur-md text-white p-4 sticky top-0 z-50 shadow-2xl border-b border-purple-900/30 flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      {/* FLOATING CONTROL PANEL ON THE RIGHT (Hidden on Print) */}
+      <aside className="no-print fixed top-6 right-6 z-50 w-80 bg-slate-950/95 backdrop-blur-xl border-2 border-purple-900/40 rounded-3xl p-5 shadow-2xl space-y-5 text-white max-h-[92vh] overflow-y-auto">
+        {/* Panel Header */}
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold">
+              <Settings2 className="w-4 h-4" />
+            </div>
+            <div>
+              <h3 className="text-xs font-black text-white uppercase tracking-wider">Panel Cetak DPT</h3>
+              <p className="text-[10px] text-slate-400">{orgName}</p>
+            </div>
+          </div>
+
           <Link
             href={`/org/${slug}/voters`}
-            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 hover:bg-slate-700 px-3.5 py-2 rounded-xl transition-all shadow-xs"
+            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg transition-all"
+            title="Kembali ke Direktori Pemilih"
           >
-            <ArrowLeft className="w-4 h-4" /> Kembali
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Tutup</span>
           </Link>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black text-white">Cetak Kartu Akses Pemilih</h3>
-              <span className="bg-purple-500/20 text-purple-300 text-[10px] font-black px-2 py-0.5 rounded-md border border-purple-500/30 uppercase">
-                1 Lembar A4
-              </span>
+        </div>
+
+        {/* Action Button: Cetak PDF */}
+        <button
+          onClick={() => window.print()}
+          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-2xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 active:scale-95"
+        >
+          <Printer className="w-4 h-4" />
+          <span>Cetak Dokumen PDF ({displayedVoters.length})</span>
+        </button>
+
+        {/* Section 1: Tanggal & Waktu Pelaksanaan */}
+        <div className="space-y-3 bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
+          <span className="text-[10px] uppercase font-black tracking-wider text-purple-400 block">
+            Jadwal di Surat
+          </span>
+
+          <div className="space-y-2 text-xs">
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+                <span>Hari / Tanggal:</span>
+              </label>
+              <input
+                type="text"
+                value={customDate}
+                onChange={(e) => setCustomDate(e.target.value)}
+                placeholder="e.g. 1 September 2026"
+                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 shadow-inner"
+              />
             </div>
-            <p className="text-[11px] text-slate-400 mt-0.5">
-              Instansi: <strong className="text-purple-300">{orgName}</strong> • Total: <strong className="text-emerald-400">{displayedVoters.length} Lembar Siap Cetak</strong>
-            </p>
+
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-purple-400" />
+                <span>Waktu Pelaksanaan:</span>
+              </label>
+              <input
+                type="text"
+                value={customTime}
+                onChange={(e) => setCustomTime(e.target.value)}
+                placeholder="e.g. 08.00 s.d Selesai"
+                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 shadow-inner"
+              />
+            </div>
           </div>
         </div>
 
-        {/* Toolbar Controls: Date & Time Customizer, Class Filter, Format, Print */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          
-          {/* Editable Day / Date */}
-          <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 shadow-xs">
-            <Calendar className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="text-xs font-bold text-slate-300">Tanggal:</span>
-            <input
-              type="text"
-              value={customDate}
-              onChange={(e) => setCustomDate(e.target.value)}
-              placeholder="e.g. 1 September 2026"
-              className="bg-slate-950 text-white text-xs font-bold px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-purple-500 w-40"
-              title="Ketik hari & tanggal pelaksanaan yang ingin dicetak pada surat"
-            />
-          </div>
+        {/* Section 2: Filter Kelas & Format Kertas */}
+        <div className="space-y-3 bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
+          <span className="text-[10px] uppercase font-black tracking-wider text-purple-400 block">
+            Filter & Tata Letak
+          </span>
 
-          {/* Editable Time */}
-          <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 shadow-xs">
-            <Clock className="w-3.5 h-3.5 text-purple-400 shrink-0" />
-            <span className="text-xs font-bold text-slate-300">Waktu:</span>
-            <input
-              type="text"
-              value={customTime}
-              onChange={(e) => setCustomTime(e.target.value)}
-              placeholder="e.g. 08.00 s.d Selesai"
-              className="bg-slate-950 text-white text-xs font-bold px-2 py-1 rounded-lg border border-slate-700 focus:outline-none focus:border-purple-500 w-36"
-              title="Ketik jam pelaksanaan yang ingin dicetak pada surat"
-            />
-          </div>
+          <div className="space-y-2 text-xs">
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-purple-400" />
+                <span>Filter Kelas:</span>
+              </label>
+              <select
+                value={classFilter}
+                onChange={(e) => setClassFilter(e.target.value)}
+                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+              >
+                <option value="ALL">Semua Kelas ({voters.length} Lembar)</option>
+                {availableClasses.map(cls => (
+                  <option key={cls} value={cls}>
+                    Kelas {cls} ({voters.filter(v => v.class === cls).length})
+                  </option>
+                ))}
+              </select>
+            </div>
 
-          {/* Class Filter */}
-          <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 shadow-xs">
-            <Filter className="w-3.5 h-3.5 text-purple-400" />
-            <span className="text-xs font-bold text-slate-300">Kelas:</span>
-            <select
-              value={classFilter}
-              onChange={(e) => setClassFilter(e.target.value)}
-              className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
-            >
-              <option value="ALL" className="bg-slate-950 text-white">Semua Kelas ({voters.length})</option>
-              {availableClasses.map(cls => (
-                <option key={cls} value={cls} className="bg-slate-950 text-white">
-                  Kelas {cls} ({voters.filter(v => v.class === cls).length})
-                </option>
-              ))}
-            </select>
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-purple-400" />
+                <span>Ukuran Kertas:</span>
+              </label>
+              <select
+                value={layout}
+                onChange={(e: any) => setLayout(e.target.value)}
+                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+              >
+                <option value="1">1 Lembar Penuh A4 (Standar)</option>
+                <option value="2">2 Surat / A4</option>
+                <option value="4">4 Kartu / A4</option>
+              </select>
+            </div>
           </div>
-
-          {/* Layout Selector */}
-          <div className="flex items-center gap-1.5 bg-slate-900 px-3 py-1.5 rounded-xl border border-slate-700 shadow-xs">
-            <Layers className="w-3.5 h-3.5 text-purple-400" />
-            <select
-              value={layout}
-              onChange={(e: any) => setLayout(e.target.value)}
-              className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
-            >
-              <option value="1" className="bg-slate-950 text-white">1 Lembar Penuh A4</option>
-              <option value="2" className="bg-slate-950 text-white">2 Surat / A4</option>
-              <option value="4" className="bg-slate-950 text-white">4 Kartu / A4</option>
-            </select>
-          </div>
-
-          {/* Print Button */}
-          <button
-            onClick={() => window.print()}
-            className="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs px-4.5 py-2.5 rounded-xl cursor-pointer transition-all flex items-center gap-2 shadow-lg shadow-purple-600/30 active:scale-95"
-          >
-            <Printer className="w-4 h-4" />
-            <span>Cetak PDF</span>
-          </button>
         </div>
-      </div>
+
+        {/* Panel Footer Status */}
+        <div className="p-3 bg-purple-950/40 border border-purple-900/30 rounded-xl text-center">
+          <p className="text-[11px] font-bold text-purple-200">
+            Total Siap Cetak: <strong className="text-emerald-400 font-black">{displayedVoters.length} Lembar</strong>
+          </p>
+        </div>
+      </aside>
 
       {/* PRINT CONTAINER WITH FULL A4 SHEETS */}
-      <div className="print-page-container p-4 sm:p-8 max-w-4xl mx-auto space-y-8 print:space-y-0">
+      <div className="print-page-container p-4 sm:p-10 max-w-4xl mx-auto space-y-8 print:space-y-0">
         {displayedVoters.length === 0 ? (
           <div className="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-300 p-8 space-y-3">
             <p className="font-black text-base text-slate-700">Tidak ada surat pemilih pada filter kelas ini.</p>
-            <p className="text-xs text-slate-500">Pilih opsi "Semua Kelas" pada menu toolbar di atas.</p>
+            <p className="text-xs text-slate-500">Pilih opsi "Semua Kelas" pada panel pengaturan di sebelah kanan.</p>
           </div>
         ) : (
           displayedVoters.map((voter, index) => {
@@ -305,7 +334,7 @@ export default function PrintClientPage({
                     </div>
                   </div>
 
-                  {/* 2. HERO CARD DATA PEMILIH (FULL-WIDTH, GEDE, MEMBENTANG KE KANAN) */}
+                  {/* 2. HERO CARD DATA PEMILIH (FULL-WIDTH, MEMBENTANG KE KANAN) */}
                   <div className="bg-gradient-to-r from-purple-50 via-slate-50 to-purple-50/50 border-2 border-slate-900 rounded-2xl p-5 sm:p-6 mb-6 shadow-xs">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       
