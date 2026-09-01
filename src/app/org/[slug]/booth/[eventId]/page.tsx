@@ -141,6 +141,7 @@ export default async function BoothPage({
       settings={serializedSettings} 
       slug={slug} 
       orgName={org.name}
+      logoUrl={org.logoUrl || null}
       voters={serializedVoters}
       poster={posterConfig}
     />

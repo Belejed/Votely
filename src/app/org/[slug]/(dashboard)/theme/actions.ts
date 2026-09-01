@@ -12,7 +12,8 @@ export async function saveThemeAction(
   posterUrl?: string | null,
   posterEnabled?: boolean,
   posterTitle?: string,
-  posterCaption?: string
+  posterCaption?: string,
+  logoUrl?: string | null
 ) {
   const session = await getAdminSession();
   if (!session) {
@@ -40,6 +41,7 @@ export async function saveThemeAction(
         name,
         primaryColor,
         secondaryColor,
+        logoUrl: logoUrl !== undefined ? logoUrl : undefined,
         posterUrl: posterUrl ?? null,
         posterEnabled: posterEnabled ?? false,
         posterTitle: posterTitle ?? 'Panduan & Tata Cara Pemilihan',

@@ -72,6 +72,7 @@ export default async function OnlineVotePage({
       candidates={serializedCandidates} 
       slug={slug} 
       orgName={org.name}
+      logoUrl={org.logoUrl || null}
       poster={posterConfig}
     />
   );

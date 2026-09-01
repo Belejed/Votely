@@ -27,7 +27,7 @@ export default async function DashboardLayout({
   // 3. Fetch organization details
   const org = await db.organization.findUnique({
     where: { slug },
-    select: { name: true, slug: true }
+    select: { name: true, slug: true, logoUrl: true }
   });
 
   if (!org) {

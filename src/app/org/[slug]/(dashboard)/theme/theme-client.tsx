@@ -31,6 +31,7 @@ interface OrganizationProps {
   plan: string;
   primaryColor: string;
   secondaryColor: string;
+  logoUrl?: string | null;
   posterUrl?: string | null;
   posterEnabled?: boolean;
   posterTitle?: string;
@@ -49,6 +50,7 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
   const [name, setName] = useState(organization.name);
   const [primaryColor, setPrimaryColor] = useState(organization.primaryColor || '#7C3AED');
   const [secondaryColor, setSecondaryColor] = useState(organization.secondaryColor || '#A78BFA');
+  const [logoUrl, setLogoUrl] = useState<string | null>(organization.logoUrl || null);
 
   // Poster Splash Screen states
   const [posterEnabled, setPosterEnabled] = useState(organization.posterEnabled ?? false);
@@ -75,6 +77,44 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
   const applyPreset = (primary: string, secondary: string) => {
     setPrimaryColor(primary);
     setSecondaryColor(secondary);
+  };
+
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const rawDataUrl = evt.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 360;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedB64 = canvas.toDataURL('image/png');
+          setLogoUrl(compressedB64);
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handlePosterUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -128,7 +168,8 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
         posterUrl,
         posterEnabled,
         posterTitle,
-        posterCaption
+        posterCaption,
+        logoUrl
       );
       if (res?.error) {
         setStatusMsg({ type: 'danger', text: res.error });
@@ -173,6 +214,62 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
         
         {/* LEFT COLUMN: CONTROLS & FORMS (7 cols) */}
         <div className="lg:col-span-7 space-y-6">
+
+                    {/* CARD 0: LOGO INSTANSI / SEKOLAH */}
+          <Card className="p-6 bg-card border-border-main rounded-3xl space-y-6 shadow-xs">
+            <div className="flex items-center justify-between border-b border-border-main pb-4">
+              <div className="flex items-center gap-2.5">
+                <div className="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center font-bold">
+                  <Vote className="w-5 h-5" />
+                </div>
+                <div>
+                  <h4 className="text-base font-black text-text-main">Logo Instansi / Sekolah</h4>
+                  <p className="text-xs text-text-muted">Logo akan ditampilkan pada navbar, bilik suara, surat suara, dan kartu undangan.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row items-center gap-5 bg-background/50 border border-dashed border-border-main p-4 rounded-2xl">
+              {logoUrl ? (
+                <div className="w-20 h-20 rounded-2xl bg-white border-2 border-brand-primary/40 p-1.5 flex items-center justify-center shadow-md shrink-0">
+                  <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                </div>
+              ) : (
+                <div className="w-20 h-20 rounded-2xl bg-brand-primary/10 text-brand-primary border-2 border-dashed border-brand-primary/30 flex flex-col items-center justify-center text-center p-2 shrink-0">
+                  <Vote className="w-8 h-8 opacity-60" />
+                  <span className="text-[8px] font-bold mt-1">Default Logo</span>
+                </div>
+              )}
+
+              <div className="space-y-2.5 flex-1 w-full">
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-brand-primary hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-primary/20">
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{logoUrl ? 'Ganti File Logo' : 'Upload File Logo (PNG/JPG)'}</span>
+                    <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+                  </label>
+
+                  {logoUrl && (
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => setLogoUrl(null)}
+                      className="text-danger hover:bg-danger/10 text-xs font-bold h-10 px-3 rounded-xl"
+                    >
+                      Hapus Logo
+                    </Button>
+                  )}
+                </div>
+
+                <Input
+                  placeholder="Atau Paste URL Logo Online (https://...)"
+                  value={logoUrl || ''}
+                  onChange={(e) => setLogoUrl(e.target.value || null)}
+                />
+              </div>
+            </div>
+          </Card>
 
           {/* CARD 1: POSTER SPLASH SCREEN SETTINGS */}
           <Card className="p-6 bg-card border-2 border-brand-primary/30 rounded-3xl space-y-6 shadow-sm">

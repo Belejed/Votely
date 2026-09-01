@@ -72,6 +72,7 @@ interface BoothClientProps {
   };
   slug: string;
   orgName: string;
+  logoUrl?: string | null;
   poster?: {
     url: string | null;
     enabled: boolean;
@@ -82,7 +83,7 @@ interface BoothClientProps {
 
 type BoothState = 'SCANNER' | 'CANDIDATES' | 'CONFIRMATION' | 'SUCCESS';
 
-export default function BoothClientPage({ event, candidates, settings, slug, orgName, voters = [], poster }: BoothClientProps) {
+export default function BoothClientPage({ event, candidates, settings, slug, orgName, logoUrl, voters = [], poster }: BoothClientProps) {
   const [boothState, setBoothState] = useState<BoothState>('SCANNER');
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -371,9 +372,15 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
       {/* Top Banner (Header) */}
       <header className="bg-card border-b border-border-main py-4 px-8 flex items-center justify-between shadow-xs shrink-0 z-10">
         <div className="flex items-center gap-3">
-          <div className="w-8.5 h-8.5 rounded-lg bg-brand-primary flex items-center justify-center text-white shadow-xs">
-            <Vote className="w-4.5 h-4.5" />
-          </div>
+          {logoUrl ? (
+            <div className="w-9 h-9 rounded-xl bg-white border border-border-main p-1 flex items-center justify-center shadow-xs shrink-0">
+              <img src={logoUrl} alt={orgName} className="w-full h-full object-contain" />
+            </div>
+          ) : (
+            <div className="w-8.5 h-8.5 rounded-lg bg-brand-primary flex items-center justify-center text-white shadow-xs shrink-0">
+              <Vote className="w-4.5 h-4.5" />
+            </div>
+          )}
           <div>
             <h2 className="font-display font-extrabold text-sm text-text-main block leading-none">{orgName} Electronic Ballot</h2>
             <span className="text-[10px] text-text-muted font-bold block mt-1 leading-none">{event.name}</span>
