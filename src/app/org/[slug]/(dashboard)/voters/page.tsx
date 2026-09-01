@@ -50,8 +50,8 @@ export default async function VotersPage({
     qrToken: v.qrToken,
     votingPass: v.votingPass,
     invitationNum: v.invitationNum,
-    hasVoted: v.participations.some((p: any) => p.eventId === activeEvent?.id),
-    createdAt: v.createdAt.toISOString(),
+    hasVoted: (v.participations || []).some((p: any) => p.eventId === activeEvent?.id),
+    createdAt: v.createdAt instanceof Date ? v.createdAt.toISOString() : (v.createdAt ? new Date(v.createdAt).toISOString() : new Date().toISOString()),
   }));
 
   return (

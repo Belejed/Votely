@@ -1,123 +1,35 @@
+import { PrismaClient } from '@prisma/client';
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
 
 const DATA_FILE = path.join(process.cwd(), 'data', 'votely_db.json');
 
-// Ensure data folder and file exist with initial schema
+// 1. Setup Prisma Client with global singleton for Next.js
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+let prismaInstance: PrismaClient | null = null;
+
+try {
+  if (process.env.DATABASE_URL) {
+    prismaInstance = globalForPrisma.prisma || new PrismaClient({
+      log: ['error'],
+    });
+    if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaInstance;
+  }
+} catch (e) {
+  console.warn('Prisma initialization fallback to local DB:', e);
+}
+
+// 2. Local JSON Database Fallback
 function getInitialData() {
   return {
-    organizations: [
-      {
-        id: 'school-a-id',
-        name: 'Greenwood High School',
-        slug: 'school-a',
-        primaryColor: '#7C3AED',
-        secondaryColor: '#A78BFA',
-        plan: 'FREE',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    users: [
-      {
-        id: 'admin-user-id',
-        name: 'Admin Greenwood',
-        email: 'admin@gwh.edu',
-        passwordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918', // SHA-256 for admin123 + salt
-        role: 'ADMIN',
-        organizationId: 'school-a-id',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    voters: [
-      {
-        id: 'voter-1-id',
-        organizationId: 'school-a-id',
-        name: 'Alice Johnson',
-        studentId: 'GW-001',
-        class: '12-A',
-        department: '12th Grade',
-        phone: '08123456789',
-        email: 'alice@gwh.edu',
-        qrToken: 'VTLY-7S8T2U9V4W5',
-        votingPass: '889977',
-        invitationNum: 'INV-10001',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'voter-2-id',
-        organizationId: 'school-a-id',
-        name: 'Bob Miller',
-        studentId: 'GW-002',
-        class: '12-A',
-        department: '12th Grade',
-        phone: '08123456790',
-        email: 'bob@gwh.edu',
-        qrToken: 'VTLY-1Y7A9Z5E2K3',
-        votingPass: '112233',
-        invitationNum: 'INV-10002',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    events: [
-      {
-        id: 'event-1-id',
-        organizationId: 'school-a-id',
-        name: 'Student Council Election 2026',
-        description: 'Annual election to choose the student president and vice president.',
-        startDate: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-        endDate: new Date(Date.now() + 5 * 24 * 60 * 60 * 1000).toISOString(),
-        votingMode: 'ONLINE',
-        authMethod: 'QR_ONLY',
-        status: 'PUBLISHED',
-        allowLiveResult: true,
-        hideRunningResult: false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
-    offline_booth_settings: [
-      {
-        id: 'booth-setting-1',
-        eventId: 'event-1-id',
-        enableBoothMode: true,
-        enableKioskMode: true,
-        fullscreen: true,
-        autoLogout: true,
-        autoReturn: true,
-        idleTimeout: 30,
-        sessionTimeout: 120,
-        cameraScan: true
-      }
-    ],
-    candidates: [
-      {
-        id: 'cand-1-id',
-        eventId: 'event-1-id',
-        number: 1,
-        name: 'Jane Doe',
-        vision: 'Empowered Student Body & Inclusivity',
-        mission: 'Create interactive clubs and host open-mic nights.',
-        socialMedia: { instagram: '@greenwood_inst' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      },
-      {
-        id: 'cand-2-id',
-        eventId: 'event-1-id',
-        number: 2,
-        name: 'John Smith',
-        vision: 'Innovative & Tech-Driven Campus',
-        mission: 'Upgrade computer lab stations and introduce campus Wi-Fi.',
-        socialMedia: { instagram: '@greenwood_inst' },
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      }
-    ],
+    organizations: [],
+    users: [],
+    voters: [],
+    events: [],
+    offline_booth_settings: [],
+    candidates: [],
     votes: [],
     event_voter_participations: [],
     announcements: [],
@@ -125,7 +37,6 @@ function getInitialData() {
   };
 }
 
-// In-memory cache for speed with disk synchronization
 let inMemoryData: any = null;
 
 function loadDatabase(): any {
@@ -145,14 +56,10 @@ function loadDatabase(): any {
     inMemoryData = JSON.parse(content);
     return inMemoryData;
   } catch (err) {
-    console.error('Error loading local database:', err);
-    if (!inMemoryData) {
-      inMemoryData = getInitialData();
-    }
+    if (!inMemoryData) inMemoryData = getInitialData();
     return inMemoryData;
   }
 }
-
 
 function saveDatabase() {
   try {
@@ -166,14 +73,11 @@ function saveDatabase() {
   }
 }
 
-// Convert ISO strings in data to native JS Date objects for Date operations
 const DATE_FIELDS = new Set(['createdAt', 'updatedAt', 'startDate', 'endDate', 'timestamp', 'votedAt']);
 
 function deserializeDates(obj: any): any {
   if (obj === null || obj === undefined) return obj;
-  if (Array.isArray(obj)) {
-    return obj.map(deserializeDates);
-  }
+  if (Array.isArray(obj)) return obj.map(deserializeDates);
   if (typeof obj === 'object') {
     const res: any = {};
     for (const [k, v] of Object.entries(obj)) {
@@ -190,12 +94,8 @@ function deserializeDates(obj: any): any {
 
 function serializeDates(obj: any): any {
   if (obj === null || obj === undefined) return obj;
-  if (obj instanceof Date) {
-    return obj.toISOString();
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(serializeDates);
-  }
+  if (obj instanceof Date) return obj.toISOString();
+  if (Array.isArray(obj)) return obj.map(serializeDates);
   if (typeof obj === 'object') {
     const res: any = {};
     for (const [k, v] of Object.entries(obj)) {
@@ -206,13 +106,11 @@ function serializeDates(obj: any): any {
   return obj;
 }
 
-// Filter matching helper
 function matchesWhere(item: any, where: any): boolean {
   if (!where) return true;
   for (const [key, val] of Object.entries(where)) {
     if (val === undefined) continue;
 
-    // Compound unique keys like organizationId_studentId
     if (key.includes('_') && typeof val === 'object' && val !== null && !('equals' in val) && !('in' in val) && !('not' in val)) {
       for (const [subK, subV] of Object.entries(val)) {
         if (item[subK] !== subV) return false;
@@ -220,7 +118,6 @@ function matchesWhere(item: any, where: any): boolean {
       continue;
     }
 
-    // Prisma operators
     if (typeof val === 'object' && val !== null && !(val instanceof Date)) {
       const ops = val as any;
       if ('not' in ops) {
@@ -271,7 +168,6 @@ function matchesWhere(item: any, where: any): boolean {
   return true;
 }
 
-// Resolve includes/relations
 async function resolveIncludes(collectionName: string, data: any, includeClause?: any): Promise<any> {
   if (!data) return data;
   if (Array.isArray(data)) {
@@ -308,8 +204,6 @@ async function resolveIncludes(collectionName: string, data: any, includeClause?
       else if (relation === 'candidates') {
         let candidates = (dbData.candidates || []).filter((c: any) => c.eventId === result.id);
         candidates.sort((a: any, b: any) => (a.number || 0) - (b.number || 0));
-        const subInclude = typeof value === 'object' && value !== null ? (value as any).include : null;
-        
         candidates = candidates.map((c: any) => {
           const cCopy = { ...c };
           const voteList = (dbData.votes || []).filter((v: any) => v.candidateId === c.id);
@@ -317,7 +211,6 @@ async function resolveIncludes(collectionName: string, data: any, includeClause?
           cCopy.votes = voteList;
           return cCopy;
         });
-
         result.candidates = deserializeDates(candidates);
       }
       else if (relation === 'votes') {
@@ -347,22 +240,6 @@ async function resolveIncludes(collectionName: string, data: any, includeClause?
       }
       else if (relation === 'participations') {
         let participations = (dbData.event_voter_participations || []).filter((p: any) => p.eventId === result.id || p.voterId === result.id);
-        const subInclude = typeof value === 'object' && value !== null ? (value as any).include : null;
-        
-        if (subInclude) {
-          participations = participations.map((p: any) => {
-            const pCopy = { ...p };
-            if (subInclude.voter) {
-              const v = (dbData.voters || []).find((x: any) => x.id === p.voterId);
-              pCopy.voter = deserializeDates(v) || null;
-            }
-            if (subInclude.event) {
-              const e = (dbData.events || []).find((x: any) => x.id === p.eventId);
-              pCopy.event = deserializeDates(e) || null;
-            }
-            return pCopy;
-          });
-        }
         result.participations = deserializeDates(participations);
       }
       else if (relation === '_count') {
@@ -388,7 +265,6 @@ async function resolveIncludes(collectionName: string, data: any, includeClause?
   return result;
 }
 
-// Model Adapter
 class LocalModelAdapter {
   private collectionName: string;
 
@@ -409,8 +285,7 @@ class LocalModelAdapter {
     const items = this.getCollection();
     const found = items.find(item => matchesWhere(item, where));
     if (!found) return null;
-    const deserialized = deserializeDates(found);
-    return resolveIncludes(this.collectionName, deserialized, include);
+    return resolveIncludes(this.collectionName, deserializeDates(found), include);
   }
 
   async findFirst(args: { where: any; orderBy?: any; include?: any }) {
@@ -432,8 +307,7 @@ class LocalModelAdapter {
       }
     }
 
-    const deserialized = deserializeDates(items[0]);
-    return resolveIncludes(this.collectionName, deserialized, include);
+    return resolveIncludes(this.collectionName, deserializeDates(items[0]), include);
   }
 
   async findMany(args?: { where?: any; orderBy?: any; include?: any }) {
@@ -454,8 +328,7 @@ class LocalModelAdapter {
       }
     }
 
-    const deserialized = deserializeDates(items);
-    return resolveIncludes(this.collectionName, deserialized, include);
+    return resolveIncludes(this.collectionName, deserializeDates(items), include);
   }
 
   async createMany(args: { data: any[] }) {
@@ -539,9 +412,8 @@ class LocalModelAdapter {
       throw new Error(`Record to update not found in ${this.collectionName}`);
     }
 
-    const current = items[index];
     const updated = {
-      ...current,
+      ...items[index],
       ...serializeDates(data),
       updatedAt: new Date().toISOString()
     };
@@ -582,9 +454,9 @@ class LocalModelAdapter {
   }
 }
 
-// Export custom db wrapper
-export const db: any = {
-  $transaction: async (fn: (tx: any) => any) => fn(db),
+// Local Database Adapter Instance
+const localDb: any = {
+  $transaction: async (fn: (tx: any) => any) => fn(localDb),
   organization: new LocalModelAdapter('organizations'),
   user: new LocalModelAdapter('users'),
   voter: new LocalModelAdapter('voters'),
@@ -597,4 +469,6 @@ export const db: any = {
   auditLog: new LocalModelAdapter('audit_logs'),
 };
 
+// Export unified db: uses Prisma (Supabase PostgreSQL) when DATABASE_URL is configured, else localDb
+export const db: any = prismaInstance || localDb;
 export default db;
