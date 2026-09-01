@@ -25,7 +25,7 @@ import {
   Sparkles,
   AlertCircle
 } from 'lucide-react';
-import { startEventAction, closeEventAction } from '../events/actions';
+import { startEventAction, closeEventAction, updateCandidatePhotoAction } from '../events/actions';
 
 interface CandidateProps {
   id: string;
@@ -85,6 +85,51 @@ export default function ActiveElectionClient({
         setStatusMsg({ type: 'success', text: 'Pemilihan berhasil dimulai serentak! Seluruh bilik suara sekarang aktif.' });
       }
     });
+  };
+
+
+  const handleQuickPhotoUpload = (candidateId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const rawDataUrl = evt.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 480;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedB64 = canvas.toDataURL('image/jpeg', 0.85);
+          startTransition(async () => {
+            const res = await updateCandidatePhotoAction(candidateId, compressedB64, slug);
+            if (res?.error) {
+              setStatusMsg({ type: 'danger', text: res.error });
+            } else {
+              setStatusMsg({ type: 'success', text: 'Foto kandidat berhasil diperbarui!' });
+            }
+          });
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleCloseElection = () => {
@@ -374,10 +419,18 @@ export default function ActiveElectionClient({
                     #{cand.number}
                   </div>
                 )}
-                <div className="min-w-0">
-                  <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider block">
-                    Paslon #{cand.number}
-                  </span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center justify-between gap-1">
+                    <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider block">
+                      Paslon #{cand.number}
+                    </span>
+                    {userRole !== 'OBSERVER' && (
+                      <label className="cursor-pointer text-[10px] font-bold text-brand-primary hover:underline">
+                        <span>{cand.photoUrl ? 'Ganti Foto' : '+ Pasang Foto'}</span>
+                        <input type="file" accept="image/*" onChange={(e) => handleQuickPhotoUpload(cand.id, e)} className="hidden" />
+                      </label>
+                    )}
+                  </div>
                   <h5 className="text-base font-black text-text-main truncate">{cand.name}</h5>
                   <span className="text-xs font-bold text-text-muted mt-1 block">
                     {cand.votesCount} Suara ({cand.percentage}%)

@@ -125,6 +125,48 @@ export default function NewEventWizardPage() {
     reader.readAsDataURL(file);
   };
 
+
+  const handleCandidatePhotoUpload = (index: number, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const rawDataUrl = evt.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 480;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedB64 = canvas.toDataURL('image/jpeg', 0.85);
+          setCandidates(prev => {
+            const updated = [...prev];
+            updated[index] = { ...updated[index], photoUrl: compressedB64 };
+            return updated;
+          });
+        }
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
+
   const addCandidate = () => {
     if (!newCand.name.trim()) return;
     setCandidates([...candidates, newCand]);
@@ -493,12 +535,12 @@ export default function NewEventWizardPage() {
 
                 <div className="grid gap-3">
                   {candidates.map((cand, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-4 bg-background/50 border border-border-main rounded-xl">
+                    <div key={idx} className="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-background/50 border-2 border-border-main rounded-2xl gap-3">
                       <div className="flex items-center gap-3.5">
                         {cand.photoUrl ? (
-                          <img src={cand.photoUrl} alt={cand.name} className="w-12 h-12 rounded-xl object-cover border border-brand-primary/30 shadow-xs" />
+                          <img src={cand.photoUrl} alt={cand.name} className="w-14 h-16 rounded-xl object-cover object-top border-2 border-brand-primary/50 shadow-xs shrink-0" />
                         ) : (
-                          <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-primary/20 to-brand-secondary/20 text-brand-primary font-black text-sm flex items-center justify-center border border-border-main">
+                          <div className="w-14 h-16 rounded-xl bg-brand-primary/10 text-brand-primary font-black text-sm flex items-center justify-center border border-border-main shrink-0">
                             #{idx + 1}
                           </div>
                         )}
@@ -514,9 +556,16 @@ export default function NewEventWizardPage() {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm" onClick={() => removeCandidate(idx)} className="text-danger hover:bg-danger/5">
-                        <Trash className="w-4.5 h-4.5" />
-                      </Button>
+
+                      <div className="flex items-center gap-2 self-end sm:self-center">
+                        <label className="cursor-pointer bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary text-xs font-bold px-3 py-2 rounded-xl transition-colors flex items-center gap-1.5 shadow-2xs">
+                          <span>{cand.photoUrl ? 'Ganti Foto' : '+ Upload Foto'}</span>
+                          <input type="file" accept="image/*" onChange={(e) => handleCandidatePhotoUpload(idx, e)} className="hidden" />
+                        </label>
+                        <Button variant="ghost" size="sm" onClick={() => removeCandidate(idx)} className="text-danger hover:bg-danger/5 h-9 px-2">
+                          <Trash className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
