@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useTransition, useEffect } from 'react';
+import React, { useState, useEffect, useTransition, useMemo } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import * as XLSX from 'xlsx';
@@ -57,8 +57,19 @@ interface ClientPageProps {
 export default function VotersClientPage({ initialVoters, slug, activeEventName }: ClientPageProps) {
   const [voters, setVoters] = useState<VoterProps[]>(initialVoters);
   const [search, setSearch] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string>('ALL');
+  const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'class_asc' | 'id_asc' | 'recent'>('class_asc');
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
+
+  // Extract unique classes dynamically
+  const uniqueClasses = useMemo(() => {
+    const set = new Set<string>();
+    voters.forEach(v => {
+      if (v.class && v.class.trim()) set.add(v.class.trim());
+    });
+    return Array.from(set).sort();
+  }, [voters]);
 
   // Invitation Card Preview Modal State
   const [selectedVoter, setSelectedVoter] = useState<VoterProps | null>(null);
@@ -119,16 +130,36 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
     }
   }, [selectedVoter]);
 
-  // Search Filter
-  const filteredVoters = voters.filter((v: any) => {
-    const q = search.toLowerCase();
-    return (
-      v.name.toLowerCase().includes(q) ||
-      (v.studentId && v.studentId.toLowerCase().includes(q)) ||
-      (v.class && v.class.toLowerCase().includes(q)) ||
-      (v.department && v.department.toLowerCase().includes(q))
-    );
-  });
+  // Search, Class Filter, and Sort
+  const filteredVoters = useMemo(() => {
+    let list = voters.filter((v: any) => {
+      const q = search.toLowerCase().trim();
+      const matchSearch = !q || (
+        v.name.toLowerCase().includes(q) ||
+        (v.studentId && v.studentId.toLowerCase().includes(q)) ||
+        (v.class && v.class.toLowerCase().includes(q)) ||
+        (v.department && v.department.toLowerCase().includes(q)) ||
+        (v.votingPass && v.votingPass.includes(q)) ||
+        (v.invitationNum && v.invitationNum.toLowerCase().includes(q))
+      );
+
+      const matchClass = selectedClass === 'ALL' || (v.class && v.class.trim() === selectedClass);
+      return matchSearch && matchClass;
+    });
+
+    // Apply Sorting
+    return list.sort((a: any, b: any) => {
+      if (sortBy === 'name_asc') return a.name.localeCompare(b.name);
+      if (sortBy === 'name_desc') return b.name.localeCompare(a.name);
+      if (sortBy === 'class_asc') {
+        const classComp = (a.class || '').localeCompare(b.class || '');
+        if (classComp !== 0) return classComp;
+        return a.name.localeCompare(b.name);
+      }
+      if (sortBy === 'id_asc') return (a.studentId || '').localeCompare(b.studentId || '');
+      return (new Date(b.createdAt).getTime()) - (new Date(a.createdAt).getTime());
+    });
+  }, [voters, search, selectedClass, sortBy]);
 
   // Excel Template Download Handler
   const downloadTemplate = () => {

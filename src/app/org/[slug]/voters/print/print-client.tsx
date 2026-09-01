@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import QRCode from 'qrcode';
-import { Vote, Lock, HelpCircle } from 'lucide-react';
+import { Vote, Lock, Printer, ArrowLeft, Layers, Filter } from 'lucide-react';
+import Link from 'next/link';
 
 interface PrintVoterProps {
   id: string;
@@ -19,16 +20,35 @@ interface PrintClientProps {
   voters: PrintVoterProps[];
   layout: string;
   orgName: string;
+  slug: string;
+  initialClassFilter: string;
+  availableClasses: string[];
   eventName: string;
   eventDate: string;
 }
 
-export default function PrintClientPage({ voters, layout, orgName, eventName, eventDate }: PrintClientProps) {
+export default function PrintClientPage({ 
+  voters, 
+  layout: initialLayout, 
+  orgName, 
+  slug, 
+  initialClassFilter, 
+  availableClasses, 
+  eventName, 
+  eventDate 
+}: PrintClientProps) {
+  const [layout, setLayout] = useState<'2' | '4' | '8'>(initialLayout as any || '4');
+  const [classFilter, setClassFilter] = useState<string>(initialClassFilter || 'ALL');
   const [qrUrls, setQrUrls] = useState<{ [token: string]: string }>({});
   const [loading, setLoading] = useState(true);
 
+  // Filtered voters for printing
+  const displayedVoters = useMemo(() => {
+    if (classFilter === 'ALL') return voters;
+    return voters.filter(v => v.class && v.class.trim() === classFilter);
+  }, [voters, classFilter]);
+
   useEffect(() => {
-    // Generate QR codes for all voters
     const generateAllQrs = async () => {
       const urls: { [token: string]: string } = {};
       try {
@@ -49,22 +69,12 @@ export default function PrintClientPage({ voters, layout, orgName, eventName, ev
     generateAllQrs();
   }, [voters]);
 
-  useEffect(() => {
-    if (!loading && Object.keys(qrUrls).length === voters.length && voters.length > 0) {
-      // Small timeout to allow images to paint in DOM, then open print dialog
-      const timer = setTimeout(() => {
-        window.print();
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [loading, qrUrls, voters]);
-
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white text-text-main font-bold">
+      <div className="min-h-screen flex items-center justify-center bg-white text-black font-bold">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded-full border-4 border-brand-primary border-t-transparent animate-spin" />
-          <span>Generating Printable QR Ballots...</span>
+          <div className="w-8 h-8 rounded-full border-4 border-purple-600 border-t-transparent animate-spin" />
+          <span className="text-sm">Menyiapkan Lembar Kartu Undangan DPT...</span>
         </div>
       </div>
     );
@@ -110,100 +120,174 @@ export default function PrintClientPage({ voters, layout, orgName, eventName, ev
         `
       }} />
 
-      {/* Floating no-print controls */}
-      <div className="no-print bg-slate-900 text-white p-4 fixed bottom-6 right-6 rounded-2xl shadow-xl flex items-center gap-4 z-50">
-        <span className="text-xs font-bold font-mono">PRINT MODE ACTIVE ({voters.length} Cards)</span>
-        <button 
-          onClick={() => window.print()}
-          className="bg-brand-primary hover:bg-purple-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer transition-colors"
-        >
-          Print Sheet
-        </button>
-        <button 
-          onClick={() => window.close()}
-          className="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl cursor-pointer transition-colors"
-        >
-          Close Tab
-        </button>
+      {/* Top Floating Controls Toolbar (Hidden on Print) */}
+      <div className="no-print bg-slate-900 text-white p-4 sticky top-0 z-50 shadow-xl border-b border-slate-800 flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/org/${slug}/voters`}
+            className="flex items-center gap-1.5 text-xs font-bold text-slate-300 hover:text-white bg-slate-800 px-3 py-2 rounded-xl transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> Kembali
+          </Link>
+          <div>
+            <h3 className="text-sm font-black text-white">Cetak Kartu Undangan DPT</h3>
+            <p className="text-[11px] text-slate-400">
+              Instansi: <span className="text-purple-400 font-bold">{orgName}</span> • Total: <span className="text-emerald-400 font-bold">{displayedVoters.length} Kartu</span>
+            </p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Class Filter */}
+          <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+            <Filter className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-xs font-bold text-slate-300">Kelas:</span>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
+            >
+              <option value="ALL" className="bg-slate-900 text-white">Semua Kelas ({voters.length})</option>
+              {availableClasses.map(cls => (
+                <option key={cls} value={cls} className="bg-slate-900 text-white">
+                  Kelas {cls} ({voters.filter(v => v.class === cls).length} Kartu)
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Layout Selector */}
+          <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-slate-700">
+            <Layers className="w-3.5 h-3.5 text-purple-400" />
+            <span className="text-xs font-bold text-slate-300">Layout:</span>
+            <select
+              value={layout}
+              onChange={(e: any) => setLayout(e.target.value)}
+              className="bg-transparent text-white text-xs font-bold focus:outline-hidden cursor-pointer"
+            >
+              <option value="2" className="bg-slate-900 text-white">2 Kartu / Halaman</option>
+              <option value="4" className="bg-slate-900 text-white">4 Kartu / Halaman</option>
+              <option value="8" className="bg-slate-900 text-white">8 Kartu / Halaman (Hemat Kertas)</option>
+            </select>
+          </div>
+
+          {/* Print Button */}
+          <button
+            onClick={() => window.print()}
+            className="bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl cursor-pointer transition-colors flex items-center gap-2 shadow-lg shadow-purple-600/30"
+          >
+            <Printer className="w-4 h-4" />
+            <span>Cetak / Simpan PDF ({displayedVoters.length} Kartu)</span>
+          </button>
+        </div>
       </div>
 
-      {/* Renders cards in grid based on choice */}
-      <div className={`p-4 mx-auto max-w-4xl ${
-        layout === '2' ? 'card-grid-2' : 
-        layout === '8' ? 'card-grid-8' : 'card-grid-4'
-      }`}>
-        {voters.map((voter, index) => {
-          // Calculate page breaks for multiple pages
-          const cardsPerPage = parseInt(layout);
-          const isPageBreak = (index + 1) % cardsPerPage === 0 && index + 1 !== voters.length;
+      {/* Cards Container */}
+      <div className="p-6 max-w-5xl mx-auto">
+        {displayedVoters.length === 0 ? (
+          <div className="py-20 text-center text-slate-500">
+            <p className="font-bold text-sm">Tidak ada kartu pemilih untuk filter kelas yang dipilih.</p>
+          </div>
+        ) : (
+          <div className={`card-grid-${layout}`}>
+            {displayedVoters.map((voter, index) => {
+              const cardsPerPage = parseInt(layout);
+              const isLastCardOnPage = (index + 1) % cardsPerPage === 0 && index !== displayedVoters.length - 1;
 
-          return (
-            <React.Fragment key={voter.id}>
-              {/* Card Container */}
-              <div className="border border-slate-300 rounded-2xl p-4 bg-white flex flex-col justify-between aspect-[1.41/1] overflow-hidden text-left relative page-card shadow-xs">
-                {/* Visual cut markers for printing */}
-                <div className="absolute top-0 left-0 w-3 h-[1px] bg-slate-300" />
-                <div className="absolute top-0 left-0 w-[1px] h-3 bg-slate-300" />
-                <div className="absolute top-0 right-0 w-3 h-[1px] bg-slate-300" />
-                <div className="absolute top-0 right-0 w-[1px] h-3 bg-slate-300" />
-                <div className="absolute bottom-0 left-0 w-3 h-[1px] bg-slate-300" />
-                <div className="absolute bottom-0 left-0 w-[1px] h-3 bg-slate-300" />
-                <div className="absolute bottom-0 right-0 w-3 h-[1px] bg-slate-300" />
-                <div className="absolute bottom-0 right-0 w-[1px] h-3 bg-slate-300" />
+              return (
+                <React.Fragment key={voter.id}>
+                  <div className={`border-2 border-slate-800 rounded-2xl p-4 bg-white flex flex-col justify-between relative overflow-hidden shadow-xs ${
+                    layout === '8' ? 'p-3' : layout === '2' ? 'p-6' : 'p-4'
+                  }`}>
+                    {/* Header */}
+                    <div className="flex items-center justify-between border-b border-slate-200 pb-2.5 mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="w-7 h-7 rounded-lg bg-slate-900 text-white flex items-center justify-center font-black text-xs">
+                          <Vote className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="font-black text-xs block text-slate-900 leading-tight uppercase tracking-wider">{orgName}</span>
+                          <span className="text-[10px] text-slate-500 font-bold block">{eventName}</span>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[10px] bg-slate-100 text-slate-700 font-mono font-bold px-2 py-0.5 rounded-md block">
+                          {voter.invitationNum}
+                        </span>
+                        <span className="text-[9px] text-slate-400 block mt-0.5 font-bold">KARTU SUARA DPT</span>
+                      </div>
+                    </div>
 
-                {/* Card Top Brand */}
-                <div className="flex items-center justify-between border-b border-slate-200 pb-2 mb-2">
-                  <div className="flex items-center gap-1.5">
-                    <Vote className="w-4.5 h-4.5 text-purple-700" />
-                    <div>
-                      <span className="font-extrabold text-[11px] block leading-none">{orgName}</span>
-                      <span className="text-[8px] text-slate-500 font-bold block mt-0.5">{eventName}</span>
+                    {/* Body Info & QR */}
+                    <div className="flex items-center justify-between gap-3 my-2">
+                      <div className="space-y-1.5 flex-1 min-w-0">
+                        <div>
+                          <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block">Nama Lengkap</span>
+                          <span className={`font-black text-slate-900 block truncate ${layout === '8' ? 'text-xs' : 'text-sm'}`}>
+                            {voter.name}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block">NIS / NIK</span>
+                            <span className="font-mono font-bold text-xs text-slate-800 block">
+                              {voter.studentId || '-'}
+                            </span>
+                          </div>
+                          <div>
+                            <span className="text-[9px] uppercase tracking-wider text-slate-400 font-bold block">Kelas / Jurusan</span>
+                            <span className="font-bold text-xs text-purple-700 block truncate">
+                              {voter.class ? `${voter.class}` : '-'} {voter.department ? `(${voter.department})` : ''}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* PIN Passcode Box */}
+                        <div className="mt-2 bg-slate-50 border border-slate-200 rounded-xl p-2 flex items-center justify-between">
+                          <div className="flex items-center gap-1.5 text-slate-500">
+                            <Lock className="w-3.5 h-3.5 text-purple-600" />
+                            <span className="text-[10px] font-bold">PIN Coblos:</span>
+                          </div>
+                          <span className="font-mono font-black text-sm text-slate-900 tracking-widest bg-white px-2 py-0.5 rounded border border-slate-300 shadow-xs">
+                            {voter.votingPass}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* QR Code */}
+                      <div className="flex flex-col items-center justify-center shrink-0">
+                        {qrUrls[voter.qrToken] ? (
+                          <div className="p-1 bg-white border border-slate-300 rounded-xl shadow-xs">
+                            <img 
+                              src={qrUrls[voter.qrToken]} 
+                              alt="QR Ballot Code" 
+                              className={`${layout === '8' ? 'w-18 h-18' : layout === '2' ? 'w-26 h-26' : 'w-22 h-22'} rounded-lg`} 
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-20 h-20 bg-slate-100 rounded-xl flex items-center justify-center">
+                            <span className="text-[9px] text-slate-400">QR Loading</span>
+                          </div>
+                        )}
+                        <span className="text-[8px] font-mono text-slate-400 mt-1 block">Scan di Bilik</span>
+                      </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-slate-100 pt-2 mt-2 flex items-center justify-between text-[9px] text-slate-400 font-medium">
+                      <span>Gunakan QR / PIN untuk memilih di Bilik Suara</span>
+                      <span className="font-bold text-slate-500">Votely by Belejed</span>
                     </div>
                   </div>
-                  <span className="font-mono text-[9px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                    {voter.invitationNum}
-                  </span>
-                </div>
 
-                {/* Card Middle Body */}
-                <div className="flex items-center gap-4 flex-1">
-                  {/* Voter Info */}
-                  <div className="flex-1 space-y-1">
-                    <span className="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Official Ballot Voter</span>
-                    <h5 className="font-extrabold text-sm text-slate-900 leading-tight truncate">{voter.name}</h5>
-                    <p className="text-[10px] text-slate-500">ID: {voter.studentId || '—'}</p>
-                    <p className="text-[9px] text-slate-500 font-bold uppercase mt-0.5 leading-none">
-                      {voter.class || ''} {voter.department ? `• ${voter.department}` : ''}
-                    </p>
-                  </div>
-
-                  {/* QR Image */}
-                  <div className="w-24 h-24 shrink-0 flex items-center justify-center border border-slate-200 rounded-xl bg-white">
-                    {qrUrls[voter.qrToken] ? (
-                      <img src={qrUrls[voter.qrToken]} alt="Voter QR" className="w-22 h-22" />
-                    ) : (
-                      <div className="text-[8px]">QR Loading...</div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Card Bottom Instructions & Passcode */}
-                <div className="border-t border-slate-200 pt-2 mt-2 flex items-center justify-between text-[9px] text-slate-500 leading-relaxed font-semibold">
-                  <div className="flex items-center gap-1.5 bg-purple-50 text-purple-800 border border-purple-100 rounded-lg px-2.5 py-1.5 font-bold">
-                    <Lock className="w-3.5 h-3.5" />
-                    <span>Passcode: <span className="font-mono text-sm tracking-wider font-extrabold ml-1">{voter.votingPass}</span></span>
-                  </div>
-                  <div className="text-right text-[8px] text-slate-400 font-bold uppercase leading-none">
-                    <span>Scan QR at booth to vote</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Page break marker */}
-              {isPageBreak && <div className="page-break" />}
-            </React.Fragment>
-          );
-        })}
+                  {/* Page break marker */}
+                  {isLastCardOnPage && <div className="page-break" />}
+                </React.Fragment>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );
