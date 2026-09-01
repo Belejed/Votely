@@ -10,9 +10,15 @@ async function verifyAdminTenant(slug: string, allowedRoles: string[] = ['SUPER_
     return { error: 'Sesi login telah berakhir. Silakan login kembali.' };
   }
 
-  const org = await db.organization.findUnique({ where: { slug } });
+  // Find org case-insensitively or by slug
+  const org = await db.organization.findFirst({
+    where: {
+      slug: { equals: slug, mode: 'insensitive' }
+    }
+  });
+
   if (!org) {
-    return { error: 'Organisasi tidak ditemukan.' };
+    return { error: `Organisasi "${slug}" tidak ditemukan.` };
   }
 
   // Look up user in DB to prevent cookie desynchronization
@@ -29,7 +35,7 @@ async function verifyAdminTenant(slug: string, allowedRoles: string[] = ['SUPER_
   const effectiveRole = user.role;
 
   if (!isSuperAdmin) {
-    const belongsToOrg = user.organizationId === org.id || user.organization?.slug === slug;
+    const belongsToOrg = user.organizationId === org.id || user.organization?.slug?.toLowerCase() === org.slug.toLowerCase();
     if (!belongsToOrg) {
       return { error: 'Unauthorized: Akun Anda tidak memiliki akses ke instansi ini.' };
     }
@@ -161,8 +167,10 @@ export async function archiveEventAction(eventId: string, slug: string) {
   const { org } = auth;
 
   try {
-    const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    const event = await db.event.findFirst({
+      where: { id: eventId, organizationId: org.id }
+    });
+    if (!event) {
       return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
     await db.event.update({
@@ -186,8 +194,10 @@ export async function deleteEventAction(eventId: string, slug: string) {
   const { org } = auth;
 
   try {
-    const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    const event = await db.event.findFirst({
+      where: { id: eventId, organizationId: org.id }
+    });
+    if (!event) {
       return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
@@ -217,17 +227,21 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
   const { org } = auth;
 
   try {
-    const candidate = await db.candidate.findUnique({
-      where: { id: candidateId },
-      include: { event: true }
+    const candidate = await db.candidate.findFirst({
+      where: {
+        id: candidateId,
+        event: {
+          organizationId: org.id
+        }
+      }
     });
 
-    if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
-      return { error: 'Unauthorized: Kandidat tidak ditemukan pada instansi ini.' };
+    if (!candidate) {
+      return { error: 'Data calon kandidat tidak ditemukan pada instansi ini.' };
     }
 
     await db.candidate.update({
-      where: { id: candidateId },
+      where: { id: candidate.id },
       data: { photoUrl },
     });
 
@@ -246,8 +260,10 @@ export async function startEventAction(eventId: string, slug: string) {
   const { org, session } = auth;
 
   try {
-    const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    const event = await db.event.findFirst({
+      where: { id: eventId, organizationId: org.id }
+    });
+    if (!event) {
       return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
@@ -296,8 +312,10 @@ export async function closeEventAction(eventId: string, slug: string) {
   const { org, session } = auth;
 
   try {
-    const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    const event = await db.event.findFirst({
+      where: { id: eventId, organizationId: org.id }
+    });
+    if (!event) {
       return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
@@ -344,17 +362,21 @@ export async function updateCandidateDetailsAction(
   const { org, session } = auth;
 
   try {
-    const candidate = await db.candidate.findUnique({
-      where: { id: candidateId },
-      include: { event: true }
+    const candidate = await db.candidate.findFirst({
+      where: {
+        id: candidateId,
+        event: {
+          organizationId: org.id
+        }
+      }
     });
 
-    if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
-      return { error: 'Unauthorized: Kandidat tidak ditemukan pada instansi ini.' };
+    if (!candidate) {
+      return { error: 'Data calon kandidat tidak ditemukan pada instansi ini.' };
     }
 
     await db.candidate.update({
-      where: { id: candidateId },
+      where: { id: candidate.id },
       data: {
         name: data.name,
         vision: data.vision,
