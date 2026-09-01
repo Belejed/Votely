@@ -9,14 +9,13 @@ import {
   ArrowLeft, 
   Layers, 
   Filter, 
-  Scissors, 
   QrCode, 
   CheckCircle2,
   Calendar,
   Clock,
   MapPin,
   ShieldCheck,
-  Edit3
+  UserCheck
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -54,7 +53,7 @@ export default function PrintClientPage({
   eventName, 
   eventDate 
 }: PrintClientProps) {
-  // Layouts: '1' (1 Lembar Penuh A4), '2' (2 Surat / A4 Model C6), '4' (4 Kartu / A4)
+  // Layouts: '1' (1 Lembar Penuh A4), '2' (2 Surat / A4), '4' (4 Kartu / A4)
   const [layout, setLayout] = useState<'1' | '2' | '4'>(
     initialLayout === '2' || initialLayout === '4' ? initialLayout : '1'
   );
@@ -106,8 +105,8 @@ export default function PrintClientPage({
       <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 font-bold">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 rounded-full border-4 border-purple-600 border-t-transparent animate-spin" />
-          <span className="text-sm font-black">Menyiapkan Surat Pemberitahuan Pemilih (1 Lembar / Pemilih)...</span>
-          <span className="text-xs text-slate-500">Memproses {voters.length} Lembar Surat Resmi A4</span>
+          <span className="text-sm font-black">Menyiapkan Lembar Surat Pemberitahuan Pemilih...</span>
+          <span className="text-xs text-slate-500">Memproses {voters.length} Lembar A4</span>
         </div>
       </div>
     );
@@ -169,7 +168,7 @@ export default function PrintClientPage({
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h3 className="text-sm font-black text-white">Cetak Surat Pemberitahuan Pemilih</h3>
+              <h3 className="text-sm font-black text-white">Cetak Kartu Akses Pemilih</h3>
               <span className="bg-emerald-500/20 text-emerald-300 text-[10px] font-black px-2 py-0.5 rounded-md border border-emerald-500/30 uppercase">
                 1 Lembar A4
               </span>
@@ -271,7 +270,7 @@ export default function PrintClientPage({
                 className="official-a4-letter bg-white text-slate-900 rounded-2xl border border-slate-300 p-8 sm:p-12 shadow-xl print:shadow-none flex flex-col justify-between"
               >
                 <div>
-                  {/* 1. KOP SURAT KEDINASAN / PANITIA LENGKAP */}
+                  {/* 1. KOP SURAT RESMI */}
                   <div className="border-b-4 border-double border-slate-900 pb-4 mb-6">
                     <div className="flex items-center gap-5">
                       {/* Logo Instansi */}
@@ -293,58 +292,43 @@ export default function PrintClientPage({
                         <h1 className="font-black text-lg sm:text-2xl text-slate-900 uppercase tracking-tight leading-tight">
                           {orgName}
                         </h1>
-                        <p className="text-xs text-slate-600 font-medium">
-                          Sistem E-Voting Terpadu & Terverifikasi Resmi Votely • Tahun {new Date().getFullYear()}
+                        <p className="text-xs text-purple-800 font-extrabold tracking-wide uppercase">
+                          KARTU TANDA PEMILIH RESMI (DPT) • {eventName.toUpperCase()}
                         </p>
                       </div>
                     </div>
                   </div>
 
-                  {/* 2. NOMOR SURAT, LAMPIRAN, PERIHAL & TUJUAN */}
-                  <div className="flex flex-col sm:flex-row justify-between items-start gap-4 text-xs leading-relaxed mb-6">
-                    {/* Left: Administrative Memo Metadata */}
-                    <div className="space-y-1.5">
-                      <div className="grid grid-cols-3 gap-2">
-                        <span className="font-bold text-slate-600">Nomor</span>
-                        <span className="col-span-2 font-mono font-bold">: 021/KPUS-OSIS/UND-DPT/{new Date().getFullYear()}</span>
+                  {/* 2. BARIS ATAS: KARTU DATA PEMILIH (DI KANAN) */}
+                  <div className="flex justify-end mb-6">
+                    <div className="bg-slate-50 border-2 border-slate-900 rounded-2xl p-4 sm:w-80 shadow-xs space-y-2">
+                      <div className="flex items-center justify-between border-b border-slate-300 pb-2">
+                        <span className="text-[10px] uppercase font-black tracking-wider text-slate-500">
+                          DATA PEMILIH TETAP
+                        </span>
+                        <span className="font-mono font-black text-xs bg-slate-900 text-white px-2 py-0.5 rounded-md">
+                          {voter.invitationNum}
+                        </span>
                       </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <span className="font-bold text-slate-600">Lampiran</span>
-                        <span className="col-span-2 font-semibold">: 1 (Satu) Berkas Token Digital</span>
-                      </div>
-                      <div className="grid grid-cols-3 gap-2">
-                        <span className="font-bold text-slate-600">Perihal</span>
-                        <span className="col-span-2 font-black text-slate-900">: Pemberitahuan Pemungutan Suara (Model C-6)</span>
-                      </div>
-                    </div>
 
-                    {/* Right: Addressing the Voter (NO JURUSAN) */}
-                    <div className="bg-slate-50 border border-slate-300 rounded-xl p-3.5 sm:w-72 space-y-1">
-                      <span className="text-[10px] uppercase font-bold text-slate-500 block">Kepada Yth. Saudara/i:</span>
-                      <strong className="text-sm font-black text-slate-900 block uppercase">{voter.name}</strong>
-                      <span className="text-xs font-bold text-purple-900 block">
-                        Kelas: {voter.class || '—'}
-                      </span>
-                      <span className="text-xs font-mono text-slate-600 block">
-                        NIS / ID: {voter.studentId || '—'}
-                      </span>
+                      <div className="space-y-1 text-xs">
+                        <div className="grid grid-cols-3 gap-1">
+                          <span className="text-slate-500 font-bold text-[11px]">Nama</span>
+                          <span className="col-span-2 font-black text-slate-900 text-sm uppercase truncate">: {voter.name}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          <span className="text-slate-500 font-bold text-[11px]">Kelas</span>
+                          <span className="col-span-2 font-black text-purple-900 text-xs">: {voter.class || '—'}</span>
+                        </div>
+                        <div className="grid grid-cols-3 gap-1">
+                          <span className="text-slate-500 font-bold text-[11px]">NIS / ID</span>
+                          <span className="col-span-2 font-mono font-bold text-slate-800 text-xs">: {voter.studentId || '—'}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* 3. PARAGRAF PEMBUKA RESMI */}
-                  <div className="text-xs sm:text-sm text-slate-800 leading-relaxed mb-5 space-y-2">
-                    <p>
-                      Dengan hormat,
-                    </p>
-                    <p>
-                      Sehubungan dengan diselenggarakannya agenda <strong>{eventName}</strong>, Panitia Pemilihan memberitahukan bahwa Saudara/i telah terdaftar secara sah dalam <strong>Daftar Pemilih Tetap (DPT)</strong> dengan <strong>Nomor Undangan: {voter.invitationNum}</strong>.
-                    </p>
-                    <p>
-                      Untuk itu, kami mengundang Saudara/i untuk hadir memberikan hak suara secara langsung dan demokratis pada:
-                    </p>
-                  </div>
-
-                  {/* 4. TABEL JADWAL & LOKASI PEMUNGUTAN SUARA (CUSTOMIZABLE DATE & TIME) */}
+                  {/* 3. TABEL JADWAL & LOKASI PEMUNGUTAN SUARA */}
                   <div className="bg-slate-50 border-2 border-slate-300 rounded-2xl p-5 mb-6 text-xs sm:text-sm">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2.5">
@@ -385,10 +369,10 @@ export default function PrintClientPage({
                     </div>
                   </div>
 
-                  {/* 5. KOTAK KREDENSIAL AKSES BILIK SUARA RESMI */}
+                  {/* 4. KOTAK KREDENSIAL AKSES BILIK SUARA (DIGITAL BALLOT PASS) */}
                   <div className="border-2 border-slate-900 rounded-2xl p-6 bg-white mb-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                      {/* Left: PIN Segmen & Instructions */}
+                      {/* Left: Large Segmented PIN */}
                       <div className="space-y-3 flex-1 text-center sm:text-left">
                         <div className="space-y-1">
                           <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
@@ -416,8 +400,8 @@ export default function PrintClientPage({
                         </p>
                       </div>
 
-                      {/* Right: Big Crisp QR Code */}
-                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-slate-200 pl-0 sm:pl-6">
+                      {/* Right: Big Crisp QR Code with bottom padding */}
+                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-slate-200 pl-0 sm:pl-6 pb-2">
                         {qrUrls[voter.qrToken] ? (
                           <div className="p-2 bg-white border-2 border-slate-900 rounded-2xl shadow-sm">
                             <img 
@@ -431,33 +415,26 @@ export default function PrintClientPage({
                             <QrCode className="w-10 h-10 text-slate-400" />
                           </div>
                         )}
-                        <span className="text-[9px] font-mono font-black uppercase tracking-widest text-slate-700 mt-1.5 block">
+                        <span className="text-[9px] font-mono font-black uppercase tracking-widest text-slate-700 mt-2 block">
                           SCAN TOKEN DI BILIK
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  {/* 6. TATA TERTIB / PANDUAN PEMBERIAN SUARA */}
+                  {/* 5. PETUNJUK COBLOS DI BILIK SUARA */}
                   <div className="text-xs text-slate-700 bg-slate-50 border border-slate-200 rounded-xl p-4 mb-6 space-y-1.5">
                     <strong className="text-slate-900 block font-bold text-xs">PETUNJUK PENGGUNAAN DI BILIK SUARA:</strong>
                     <ol className="list-decimal pl-5 space-y-1 leading-relaxed text-[11px]">
-                      <li>Bawa lembar surat pemberitahuan ini ke lokasi <strong>Bilik Suara Kiosk (TPS)</strong> yang telah disediakan panitia.</li>
+                      <li>Bawa lembar ini ke lokasi <strong>Bilik Suara Kiosk (TPS)</strong> yang telah disediakan panitia.</li>
                       <li>Arahkan <strong>QR Code</strong> di atas ke kamera pemindai bilik, atau ketik <strong>PIN 6-Digit</strong> Anda pada layar sentuh.</li>
                       <li>Cermati foto dan visi-misi calon, lalu klik tombol <strong>Coblos</strong> pada Pasangan Calon pilihan Anda.</li>
                       <li>Tekan tombol <strong>Konfirmasi Suara</strong> untuk menyelesaikan proses pencoblosan secara sah dan terenkripsi.</li>
                     </ol>
                   </div>
-
-                  {/* 7. PARAGRAF PENUTUP & FOOTER RESMI (NO SIGNATURE BLOCK) */}
-                  <div className="text-xs text-slate-800 leading-relaxed space-y-3">
-                    <p>
-                      Demikian surat pemberitahuan ini kami sampaikan. Atas perhatian dan partisipasi aktif Saudara/i dalam menyukseskan pesta demokrasi ini, kami ucapkan terima kasih.
-                    </p>
-                  </div>
                 </div>
 
-                {/* 8. CLEAN BOTTOM SECURITY WATERMARK */}
+                {/* 6. CLEAN BOTTOM SECURITY WATERMARK */}
                 <div className="pt-6 border-t-2 border-slate-300 flex items-center justify-between text-xs text-slate-500 font-medium">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
