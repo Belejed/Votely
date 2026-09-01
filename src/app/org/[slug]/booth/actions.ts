@@ -208,7 +208,22 @@ export async function castVoteAction(
       const candidateIds = Array.isArray(candidateIdsOrId) ? candidateIdsOrId : [candidateIdsOrId];
       
       const event = await tx.event.findUnique({ where: { id: eventId } });
-      const maxAllowed = event?.multipleCandidate ? (event?.maxVotes || 2) : 1;
+      
+      // Fetch all candidate categories in this election
+      const eventCandidates = await tx.candidate.findMany({
+        where: { eventId },
+        select: { id: true, category: true }
+      });
+      const distinctCategories = new Set(eventCandidates.map((c: any) => c.category || 'OSIS'));
+      const categoryCount = Math.max(1, distinctCategories.size);
+
+      // Max allowed is at least the number of distinct categories (e.g. 1 OSIS + 1 MPK = 2),
+      // or the configured maxVotes if multi-candidate is enabled
+      const maxAllowed = Math.max(
+        categoryCount,
+        event?.multipleCandidate ? (event?.maxVotes || 2) : 1
+      );
+
       if (candidateIds.length === 0) {
         throw new Error('Harap pilih minimal 1 kandidat.');
       }
