@@ -1,0 +1,746 @@
+{
+  "organizations": [
+    {
+      "id": "school-a-id",
+      "name": "Greenwood High School",
+      "slug": "school-a",
+      "primaryColor": "#7C3AED",
+      "secondaryColor": "#A78BFA",
+      "plan": "FREE",
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "name": "Test School",
+      "slug": "test-school",
+      "primaryColor": "#7C3AED",
+      "secondaryColor": "#A78BFA",
+      "plan": "FREE",
+      "id": "56dde07e-b2a7-41b2-8702-834f5ac16210",
+      "createdAt": "2026-09-01T07:48:27.873Z",
+      "updatedAt": "2026-09-01T07:48:27.873Z"
+    },
+    {
+      "name": "kposman71",
+      "slug": "kposman71",
+      "primaryColor": "#DC2626",
+      "secondaryColor": "#F87171",
+      "plan": "FREE",
+      "createdAt": "2026-09-01T07:49:05.256Z",
+      "updatedAt": "2026-09-01T09:53:17.779Z",
+      "id": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a"
+    },
+    {
+      "name": "sman71",
+      "slug": "sman71",
+      "primaryColor": "#DC2626",
+      "secondaryColor": "#F87171",
+      "plan": "FREE",
+      "createdAt": "2026-09-01T10:41:51.035Z",
+      "updatedAt": "2026-09-01T10:42:08.781Z",
+      "id": "e9d0982b-26ce-4d37-8beb-0d55d4ff0cdc"
+    }
+  ],
+  "users": [
+    {
+      "id": "admin-user-id",
+      "name": "Admin Greenwood",
+      "email": "admin@gwh.edu",
+      "passwordHash": "8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918",
+      "role": "ADMIN",
+      "organizationId": "school-a-id",
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z",
+      "username": "admin"
+    },
+    {
+      "name": "Test Admin",
+      "email": "test@school.edu",
+      "passwordHash": "hash123",
+      "role": "ADMIN",
+      "id": "55662334-2c9f-408f-aba2-22383c994ca3",
+      "createdAt": "2026-09-01T07:48:27.874Z",
+      "updatedAt": "2026-09-01T07:48:27.874Z",
+      "username": "test"
+    },
+    {
+      "name": "arya",
+      "username": "arya",
+      "email": "arya@kposman71.local",
+      "passwordHash": "59a6da3480aa197d35b95d5532d7225a9bb37af78589ff54edce92a929059449",
+      "role": "ADMIN",
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "id": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "createdAt": "2026-09-01T10:12:15.822Z",
+      "updatedAt": "2026-09-01T10:12:15.822Z"
+    },
+    {
+      "name": "arya ghiffari",
+      "username": "arya",
+      "email": "arya@sman71.local",
+      "passwordHash": "59a6da3480aa197d35b95d5532d7225a9bb37af78589ff54edce92a929059449",
+      "role": "ADMIN",
+      "organizationId": "e9d0982b-26ce-4d37-8beb-0d55d4ff0cdc",
+      "createdAt": "2026-09-01T10:41:51.037Z",
+      "updatedAt": "2026-09-01T10:41:51.037Z",
+      "id": "4a911c8d-8e9f-4e81-bef5-b40f96da21d4"
+    }
+  ],
+  "voters": [
+    {
+      "id": "voter-1-id",
+      "organizationId": "school-a-id",
+      "name": "Alice Johnson",
+      "studentId": "GW-001",
+      "class": "12-A",
+      "department": "12th Grade",
+      "phone": "08123456789",
+      "email": "alice@gwh.edu",
+      "qrToken": "VTLY-7S8T2U9V4W5",
+      "votingPass": "889977",
+      "invitationNum": "INV-10001",
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "id": "voter-2-id",
+      "organizationId": "school-a-id",
+      "name": "Bob Miller",
+      "studentId": "GW-002",
+      "class": "12-A",
+      "department": "12th Grade",
+      "phone": "08123456790",
+      "email": "bob@gwh.edu",
+      "qrToken": "VTLY-1Y7A9Z5E2K3",
+      "votingPass": "112233",
+      "invitationNum": "INV-10002",
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "Alice Johnson",
+      "studentId": "GW-001",
+      "class": "12-A",
+      "department": "Science",
+      "phone": "08123456789",
+      "email": "alice@gwh.edu",
+      "qrToken": "VTLY-USO4YFT042D",
+      "votingPass": "702375",
+      "invitationNum": "INV-33913",
+      "customFields": {},
+      "id": "df921c22-70dd-4c61-95b4-e6a95837f6cb",
+      "createdAt": "2026-09-01T08:01:47.942Z",
+      "updatedAt": "2026-09-01T08:01:47.942Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "Bob Miller",
+      "studentId": "GW-002",
+      "class": "12-B",
+      "department": "Humanities",
+      "phone": "08123456790",
+      "email": "bob@gwh.edu",
+      "qrToken": "VTLY-VMRY06E0JLA",
+      "votingPass": "191672",
+      "invitationNum": "INV-45615",
+      "customFields": {},
+      "id": "2ea19458-47d8-4cb7-922b-466af858af73",
+      "createdAt": "2026-09-01T08:01:47.943Z",
+      "updatedAt": "2026-09-01T08:01:47.943Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "asep",
+      "studentId": null,
+      "class": "11a",
+      "department": "Siswa",
+      "phone": null,
+      "email": null,
+      "qrToken": "VTLY-UE6RT4GUGHL",
+      "votingPass": "878057",
+      "invitationNum": "INV-23822",
+      "customFields": {},
+      "id": "b87fefd5-b47b-4765-ae3a-42fe3b13496a",
+      "createdAt": "2026-09-01T10:31:20.048Z",
+      "updatedAt": "2026-09-01T10:31:20.048Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "ajeng",
+      "studentId": null,
+      "class": "12b",
+      "department": "Siswa",
+      "phone": null,
+      "email": null,
+      "qrToken": "VTLY-F55AO2WT43M",
+      "votingPass": "561096",
+      "invitationNum": "INV-22891",
+      "customFields": {},
+      "id": "a1be9483-92e9-48a2-8910-85e8291e474d",
+      "createdAt": "2026-09-01T10:31:20.050Z",
+      "updatedAt": "2026-09-01T10:31:20.050Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "kijang",
+      "studentId": null,
+      "class": "11b",
+      "department": "Guru",
+      "phone": null,
+      "email": null,
+      "qrToken": "VTLY-CSL4JNQBAER",
+      "votingPass": "408539",
+      "invitationNum": "INV-94172",
+      "customFields": {},
+      "id": "162bd521-6611-4b4f-9a03-896579c3c11d",
+      "createdAt": "2026-09-01T10:31:20.051Z",
+      "updatedAt": "2026-09-01T10:31:20.051Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "ujang",
+      "studentId": null,
+      "class": "11a",
+      "department": "Guru",
+      "phone": null,
+      "email": null,
+      "qrToken": "VTLY-U95E4YDWZGG",
+      "votingPass": "504678",
+      "invitationNum": "INV-78707",
+      "customFields": {},
+      "id": "d26c8e50-a9e1-42f4-9060-10317c680e7c",
+      "createdAt": "2026-09-01T10:31:20.052Z",
+      "updatedAt": "2026-09-01T10:31:20.052Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "siti nurleha",
+      "studentId": "313123",
+      "class": "12B",
+      "department": "IPA",
+      "phone": null,
+      "email": null,
+      "qrToken": "VTLY-PC8CKSOG5NY",
+      "votingPass": "555979",
+      "invitationNum": "INV-73385",
+      "customFields": {},
+      "id": "74958a9d-6336-4d91-852a-07707b014eec",
+      "createdAt": "2026-09-01T10:31:45.635Z",
+      "updatedAt": "2026-09-01T10:31:45.635Z"
+    }
+  ],
+  "events": [
+    {
+      "id": "event-1-id",
+      "organizationId": "school-a-id",
+      "name": "Student Council Election 2026",
+      "description": "Annual election to choose the student president and vice president.",
+      "startDate": "2026-08-30T07:48:22.369Z",
+      "endDate": "2026-09-06T07:48:22.369Z",
+      "votingMode": "ONLINE",
+      "authMethod": "QR_ONLY",
+      "status": "PUBLISHED",
+      "allowLiveResult": true,
+      "hideRunningResult": false,
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "Pemilihan Osis 2027-2028",
+      "description": "",
+      "startDate": "2026-09-01T08:09:25.048Z",
+      "endDate": "2026-09-08T08:09:25.048Z",
+      "votingMode": "OFFLINE",
+      "authMethod": "WHATSAPP_OTP",
+      "allowLiveResult": true,
+      "hideRunningResult": false,
+      "voteConfirmation": true,
+      "anonymousVote": true,
+      "multipleCandidate": false,
+      "maxVotes": 1,
+      "autoClose": true,
+      "status": "ARCHIVED",
+      "id": "ec470c96-db90-403b-9e30-e4bafe75be00",
+      "createdAt": "2026-09-01T08:09:25.049Z",
+      "updatedAt": "2026-09-01T08:09:59.012Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "name": "123",
+      "description": "",
+      "startDate": "2026-09-01T08:44:41.060Z",
+      "endDate": "2026-09-08T08:44:41.060Z",
+      "votingMode": "OFFLINE",
+      "authMethod": "QR_ONLY",
+      "allowLiveResult": true,
+      "hideRunningResult": false,
+      "voteConfirmation": true,
+      "anonymousVote": true,
+      "multipleCandidate": false,
+      "maxVotes": 1,
+      "autoClose": true,
+      "status": "PUBLISHED",
+      "id": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "createdAt": "2026-09-01T08:44:41.061Z",
+      "updatedAt": "2026-09-01T08:44:41.061Z"
+    }
+  ],
+  "offline_booth_settings": [
+    {
+      "id": "booth-setting-1",
+      "eventId": "event-1-id",
+      "enableBoothMode": true,
+      "enableKioskMode": true,
+      "fullscreen": true,
+      "autoLogout": true,
+      "autoReturn": true,
+      "idleTimeout": 30,
+      "sessionTimeout": 120,
+      "cameraScan": true
+    },
+    {
+      "eventId": "f4e00838-f340-4184-a426-13afc7b85e25",
+      "enableBoothMode": true,
+      "enableKioskMode": true,
+      "fullscreen": false,
+      "autoLogout": true,
+      "autoReturn": true,
+      "idleTimeout": 30,
+      "sessionTimeout": 120,
+      "cameraScan": true,
+      "id": "29676c90-a41b-4091-877a-93887f7749a2",
+      "createdAt": "2026-09-01T07:58:07.074Z",
+      "updatedAt": "2026-09-01T07:58:07.074Z"
+    },
+    {
+      "eventId": "ec470c96-db90-403b-9e30-e4bafe75be00",
+      "enableBoothMode": true,
+      "enableKioskMode": false,
+      "fullscreen": false,
+      "autoLogout": true,
+      "autoReturn": true,
+      "idleTimeout": 30,
+      "sessionTimeout": 120,
+      "cameraScan": true,
+      "id": "47e35433-d660-4074-8803-9c894b637783",
+      "createdAt": "2026-09-01T08:09:25.050Z",
+      "updatedAt": "2026-09-01T08:09:25.050Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "enableBoothMode": true,
+      "enableKioskMode": false,
+      "fullscreen": false,
+      "autoLogout": true,
+      "autoReturn": true,
+      "idleTimeout": 30,
+      "sessionTimeout": 120,
+      "cameraScan": true,
+      "id": "e6cbecfc-40ae-46d5-b051-d4993c3ca019",
+      "createdAt": "2026-09-01T08:44:41.062Z",
+      "updatedAt": "2026-09-01T08:44:41.062Z"
+    }
+  ],
+  "candidates": [
+    {
+      "id": "cand-1-id",
+      "eventId": "event-1-id",
+      "number": 1,
+      "name": "Jane Doe",
+      "vision": "Empowered Student Body & Inclusivity",
+      "mission": "Create interactive clubs and host open-mic nights.",
+      "socialMedia": {
+        "instagram": "@greenwood_inst"
+      },
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "id": "cand-2-id",
+      "eventId": "event-1-id",
+      "number": 2,
+      "name": "John Smith",
+      "vision": "Innovative & Tech-Driven Campus",
+      "mission": "Upgrade computer lab stations and introduce campus Wi-Fi.",
+      "socialMedia": {
+        "instagram": "@greenwood_inst"
+      },
+      "createdAt": "2026-09-01T07:48:22.369Z",
+      "updatedAt": "2026-09-01T07:48:22.369Z"
+    },
+    {
+      "eventId": "f4e00838-f340-4184-a426-13afc7b85e25",
+      "number": 1,
+      "name": "ahmad",
+      "vision": "",
+      "mission": "",
+      "socialMedia": {},
+      "id": "2df764f3-7001-4762-9762-2466ad36ccd4",
+      "createdAt": "2026-09-01T07:58:07.074Z",
+      "updatedAt": "2026-09-01T07:58:07.074Z"
+    },
+    {
+      "eventId": "f4e00838-f340-4184-a426-13afc7b85e25",
+      "number": 2,
+      "name": "sugeng",
+      "vision": "",
+      "mission": "",
+      "socialMedia": {},
+      "id": "d8a8abce-5964-4ea4-bc13-50b76afc7d21",
+      "createdAt": "2026-09-01T07:58:07.074Z",
+      "updatedAt": "2026-09-01T07:58:07.074Z"
+    },
+    {
+      "eventId": "ec470c96-db90-403b-9e30-e4bafe75be00",
+      "number": 1,
+      "name": "Jane Doe",
+      "vision": "Student empowerment",
+      "mission": "Creating interactive clubs",
+      "socialMedia": {},
+      "id": "f0dfa4b8-c01a-4308-b101-918d7cd00599",
+      "createdAt": "2026-09-01T08:09:25.049Z",
+      "updatedAt": "2026-09-01T08:09:25.049Z"
+    },
+    {
+      "eventId": "ec470c96-db90-403b-9e30-e4bafe75be00",
+      "number": 2,
+      "name": "John Smith",
+      "vision": "Tech campus",
+      "mission": "Expansion of campus Wi-Fi",
+      "socialMedia": {},
+      "id": "0272f72e-f1b8-43ce-91e4-69bc620436fe",
+      "createdAt": "2026-09-01T08:09:25.049Z",
+      "updatedAt": "2026-09-01T08:09:25.049Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "number": 1,
+      "name": "Jane Doe",
+      "vision": "Student empowerment",
+      "mission": "Creating interactive clubs",
+      "socialMedia": {},
+      "id": "8081a338-16c4-4732-9b91-82e1dda78ffe",
+      "createdAt": "2026-09-01T08:44:41.062Z",
+      "updatedAt": "2026-09-01T08:44:41.062Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "number": 2,
+      "name": "John Smith",
+      "vision": "Tech campus",
+      "mission": "Expansion of campus Wi-Fi",
+      "socialMedia": {},
+      "id": "4a3c1157-6797-4a97-9253-83c9624d65b6",
+      "createdAt": "2026-09-01T08:44:41.062Z",
+      "updatedAt": "2026-09-01T08:44:41.062Z"
+    }
+  ],
+  "votes": [
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "candidateId": "8081a338-16c4-4732-9b91-82e1dda78ffe",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "307aa45c-2e22-4749-a585-03abcb19a87e",
+      "createdAt": "2026-09-01T08:47:02.374Z",
+      "updatedAt": "2026-09-01T08:47:02.374Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "candidateId": "8081a338-16c4-4732-9b91-82e1dda78ffe",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "48a78131-5a8c-46b2-b5ee-9363f73f4cb3",
+      "createdAt": "2026-09-01T09:16:18.204Z",
+      "updatedAt": "2026-09-01T09:16:18.204Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "candidateId": "4a3c1157-6797-4a97-9253-83c9624d65b6",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "b814da79-1f2b-4339-8221-3a98e342c0cb",
+      "createdAt": "2026-09-01T10:35:58.263Z",
+      "updatedAt": "2026-09-01T10:35:58.263Z"
+    }
+  ],
+  "event_voter_participations": [
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "voterId": "df921c22-70dd-4c61-95b4-e6a95837f6cb",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "24798075-162a-49ad-8229-bec194ba84a8",
+      "createdAt": "2026-09-01T08:47:02.373Z",
+      "updatedAt": "2026-09-01T08:47:02.373Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "voterId": "2ea19458-47d8-4cb7-922b-466af858af73",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "330479db-0e11-4443-822e-ba5ca9d9ef23",
+      "createdAt": "2026-09-01T09:16:18.203Z",
+      "updatedAt": "2026-09-01T09:16:18.203Z"
+    },
+    {
+      "eventId": "4e733759-50c3-4c0e-b343-558b413a3040",
+      "voterId": "a1be9483-92e9-48a2-8910-85e8291e474d",
+      "device": "Desktop",
+      "browser": "Chrome",
+      "ipAddress": "::1",
+      "id": "4a7d7168-10dc-41c5-b1b5-b59dfc7ff694",
+      "createdAt": "2026-09-01T10:35:58.261Z",
+      "updatedAt": "2026-09-01T10:35:58.261Z"
+    }
+  ],
+  "announcements": [
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "title": "selamat memilih",
+      "content": "1234",
+      "isPublished": true,
+      "id": "fe921069-67c9-4a18-a54d-8095515bce84",
+      "createdAt": "2026-09-01T08:47:37.796Z",
+      "updatedAt": "2026-09-01T08:47:37.796Z"
+    }
+  ],
+  "audit_logs": [
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "ORGANIZATION_CREATED",
+      "details": "Workspace \"kposman71\" registered by Arya Ghiffari Raditya (kodoklompat4x@gmail.com)",
+      "createdAt": "2026-09-01T07:49:05.258Z",
+      "id": "efdc5549-8c20-4e14-85ec-e09ef036b4c7",
+      "updatedAt": "2026-09-01T07:49:05.258Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "EVENT_CREATE",
+      "details": "Created new election: KPO (OFFLINE)",
+      "id": "edce4e4b-424b-432a-a2ae-9f1fe43b427e",
+      "createdAt": "2026-09-01T07:58:07.075Z",
+      "updatedAt": "2026-09-01T07:58:07.075Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "VOTER_IMPORT",
+      "details": "Imported 2 voters. Skipped 0 duplicates.",
+      "id": "8d518912-a077-4062-a2a1-5c7528c2a213",
+      "createdAt": "2026-09-01T08:01:47.944Z",
+      "updatedAt": "2026-09-01T08:01:47.944Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "EVENT_CREATE",
+      "details": "Created new election: Pemilihan Osis 2027-2028 (OFFLINE)",
+      "id": "c586140d-1673-4f73-9207-90cea0af3840",
+      "createdAt": "2026-09-01T08:09:25.050Z",
+      "updatedAt": "2026-09-01T08:09:25.050Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "EVENT_CREATE",
+      "details": "Created new election: KPO (OFFLINE)",
+      "id": "30c5c975-72a4-42e5-8910-bf2306c3a158",
+      "createdAt": "2026-09-01T08:13:33.855Z",
+      "updatedAt": "2026-09-01T08:13:33.855Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "action": "VOTE_SUBMIT",
+      "details": "Anonymous ballot submitted for election ID: 02cdf058-c90c-4daf-895b-3a0d8c001de0",
+      "id": "d7f3cb3b-e7c9-43a0-b965-602a2c1c241d",
+      "createdAt": "2026-09-01T08:29:37.875Z",
+      "updatedAt": "2026-09-01T08:29:37.875Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "action": "VOTE_SUBMIT",
+      "details": "Anonymous ballot submitted for election ID: 02cdf058-c90c-4daf-895b-3a0d8c001de0",
+      "id": "f45c0165-69fb-4897-affb-85af8fa5c876",
+      "createdAt": "2026-09-01T08:29:43.275Z",
+      "updatedAt": "2026-09-01T08:29:43.275Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "EVENT_CREATE",
+      "details": "Created new election: 123 (OFFLINE)",
+      "id": "b9584fb2-e8b2-4716-835c-7568e8b60da0",
+      "createdAt": "2026-09-01T08:44:41.063Z",
+      "updatedAt": "2026-09-01T08:44:41.063Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "action": "VOTE_SUBMIT",
+      "details": "Anonymous ballot submitted for election ID: 4e733759-50c3-4c0e-b343-558b413a3040",
+      "id": "1407ff88-5820-4d26-ae29-dadc0f390d8a",
+      "createdAt": "2026-09-01T08:47:02.374Z",
+      "updatedAt": "2026-09-01T08:47:02.374Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "ANNOUNCE_CREATE",
+      "details": "Published announcement: selamat memilih",
+      "id": "79a230ca-cb6a-412e-82cb-48ebf9a168cf",
+      "createdAt": "2026-09-01T08:47:37.797Z",
+      "updatedAt": "2026-09-01T08:47:37.797Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "action": "VOTE_SUBMIT",
+      "details": "Anonymous ballot submitted for election ID: 4e733759-50c3-4c0e-b343-558b413a3040",
+      "id": "79383a6e-e19d-4445-9146-58d4711de75a",
+      "createdAt": "2026-09-01T09:16:18.204Z",
+      "updatedAt": "2026-09-01T09:16:18.204Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "EVENT_CREATE",
+      "details": "Created new election: 234 (HYBRID)",
+      "id": "b0d1e0da-9738-4580-8c49-1199e2a8a95e",
+      "createdAt": "2026-09-01T09:27:03.864Z",
+      "updatedAt": "2026-09-01T09:27:03.864Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "THEME_UPDATE",
+      "details": "Updated workspace branding. Primary: #DC2626, Secondary: #F87171",
+      "id": "6e2588cb-bada-4fbc-a4dc-fca1b3984768",
+      "createdAt": "2026-09-01T09:53:17.780Z",
+      "updatedAt": "2026-09-01T09:53:17.780Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "STAFF_CREATE",
+      "details": "Admin Arya Ghiffari Raditya created committee account: ahmad (OBSERVER)",
+      "id": "d81e5d96-02b6-48a8-9127-cf8698ece0bc",
+      "createdAt": "2026-09-01T10:09:47.378Z",
+      "updatedAt": "2026-09-01T10:09:47.378Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "STAFF_DELETE",
+      "details": "Admin Arya Ghiffari Raditya menghapus akun panitia: ahmad",
+      "id": "f7e306f7-1094-40cc-87c9-298511454741",
+      "createdAt": "2026-09-01T10:11:50.352Z",
+      "updatedAt": "2026-09-01T10:11:50.352Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "STAFF_CREATE",
+      "details": "Admin Arya Ghiffari Raditya membuat akun panitia: arya (Username: aya, Role: ADMIN)",
+      "id": "420e8231-d677-4dfd-8160-fc39524d07b9",
+      "createdAt": "2026-09-01T10:12:02.126Z",
+      "updatedAt": "2026-09-01T10:12:02.126Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "STAFF_DELETE",
+      "details": "Admin Arya Ghiffari Raditya menghapus akun panitia: arya",
+      "id": "de9b9ff4-9cf2-4e23-bd3e-5401c807e8bb",
+      "createdAt": "2026-09-01T10:12:06.292Z",
+      "updatedAt": "2026-09-01T10:12:06.292Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "0200cb79-26d6-495f-89eb-2badd37b3a97",
+      "action": "STAFF_CREATE",
+      "details": "Admin Arya Ghiffari Raditya membuat akun panitia: arya (Username: arya, Role: ADMIN)",
+      "id": "4c971837-fe6e-4c6c-a8d8-44947b3ed562",
+      "createdAt": "2026-09-01T10:12:15.823Z",
+      "updatedAt": "2026-09-01T10:12:15.823Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "action": "STAFF_DELETE",
+      "details": "Admin arya menghapus akun panitia: Arya Ghiffari Raditya",
+      "id": "dec12c13-e4c7-4823-9e8d-2d97d2858b28",
+      "createdAt": "2026-09-01T10:12:36.448Z",
+      "updatedAt": "2026-09-01T10:12:36.448Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "action": "STAFF_CREATE",
+      "details": "Admin arya membuat akun panitia: ahmad (Username: ahmad, Role: STAFF)",
+      "id": "a84ef16b-be1b-4f73-8f35-cb66dd8a790e",
+      "createdAt": "2026-09-01T10:13:02.050Z",
+      "updatedAt": "2026-09-01T10:13:02.050Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "action": "VOTER_IMPORT",
+      "details": "Imported 4 voters. Skipped 2 duplicates.",
+      "id": "b97dd3fe-acba-4937-aea7-976d36f549e1",
+      "createdAt": "2026-09-01T10:31:20.055Z",
+      "updatedAt": "2026-09-01T10:31:20.055Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "action": "VOTER_CREATE",
+      "details": "Menambahkan pemilih manual: siti nurleha (NIS: 313123)",
+      "id": "c3bee95e-882f-475a-aac0-ea1849038bb7",
+      "createdAt": "2026-09-01T10:31:45.636Z",
+      "updatedAt": "2026-09-01T10:31:45.636Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "action": "VOTE_SUBMIT",
+      "details": "Anonymous ballot submitted for election ID: 4e733759-50c3-4c0e-b343-558b413a3040",
+      "id": "dbc6212a-d19d-4f34-964e-bd139b93ddcc",
+      "createdAt": "2026-09-01T10:35:58.266Z",
+      "updatedAt": "2026-09-01T10:35:58.266Z"
+    },
+    {
+      "organizationId": "8b6abf98-fe6e-408a-9cde-36b5f0e86b3a",
+      "userId": "d4bc62da-4903-4bbd-8a17-e0df0b861575",
+      "action": "STAFF_DELETE",
+      "details": "Admin arya menghapus akun panitia: ahmad",
+      "id": "57711f91-9971-4aa6-96fe-6532c89262d2",
+      "createdAt": "2026-09-01T10:40:21.101Z",
+      "updatedAt": "2026-09-01T10:40:21.101Z"
+    },
+    {
+      "organizationId": "e9d0982b-26ce-4d37-8beb-0d55d4ff0cdc",
+      "userId": "4a911c8d-8e9f-4e81-bef5-b40f96da21d4",
+      "action": "ORGANIZATION_CREATED",
+      "details": "Workspace \"sman71\" didaftarkan oleh arya ghiffari (Username: arya)",
+      "createdAt": "2026-09-01T10:41:51.039Z",
+      "id": "b53f6d75-b531-4b95-80cf-1b3d88ec5612",
+      "updatedAt": "2026-09-01T10:41:51.040Z"
+    },
+    {
+      "organizationId": "e9d0982b-26ce-4d37-8beb-0d55d4ff0cdc",
+      "userId": "4a911c8d-8e9f-4e81-bef5-b40f96da21d4",
+      "action": "THEME_UPDATE",
+      "details": "Updated workspace branding. Primary: #DC2626, Secondary: #F87171",
+      "id": "0875833e-2c30-46e1-92d0-6189fba44f9f",
+      "createdAt": "2026-09-01T10:42:08.782Z",
+      "updatedAt": "2026-09-01T10:42:08.782Z"
+    }
+  ]
+}

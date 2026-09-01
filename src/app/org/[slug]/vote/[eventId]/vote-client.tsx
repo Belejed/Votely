@@ -1,0 +1,326 @@
+'use client';
+
+import React, { useState, useTransition } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { 
+  Vote, 
+  Lock, 
+  CheckCircle2, 
+  User, 
+  ShieldAlert,
+  ArrowRight,
+  Sparkles,
+  HelpCircle
+} from 'lucide-react';
+import { authenticateVoterAction, castVoteAction, exitVoterSessionAction } from '../../booth/actions';
+
+interface CandidateProps {
+  id: string;
+  number: number;
+  name: string;
+  vision: string;
+  mission: string;
+  socialMedia: any;
+}
+
+interface VoteClientProps {
+  event: {
+    id: string;
+    name: string;
+    description: string;
+    authMethod: string;
+    votingMode: string;
+    allowLiveResult: boolean;
+    hideRunningResult: boolean;
+    voteConfirmation: boolean;
+    anonymousVote: boolean;
+  };
+  candidates: CandidateProps[];
+  slug: string;
+  orgName: string;
+}
+
+type VoteState = 'LOGIN' | 'CANDIDATES' | 'CONFIRMATION' | 'SUCCESS';
+
+export default function VoteClientPage({ event, candidates, slug, orgName }: VoteClientProps) {
+  const [voteState, setVoteState] = useState<VoteState>('LOGIN');
+  const [isPending, startTransition] = useTransition();
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Voter & Ballot State
+  const [activeVoter, setActiveVoter] = useState<{ id: string; name: string; studentId: string | null } | null>(null);
+  const [selectedCandidate, setSelectedCandidate] = useState<CandidateProps | null>(null);
+
+  // Manual Login Form
+  const [studentId, setStudentId] = useState('');
+  const [votingPass, setVotingPass] = useState('');
+
+  const handleLogin = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!studentId.trim() || !votingPass.trim()) {
+      setErrorMsg('Please fill in all credential fields.');
+      return;
+    }
+
+    setErrorMsg(null);
+    startTransition(async () => {
+      const res = await authenticateVoterAction(slug, event.id, { studentId, votingPass });
+      if (res?.error) {
+        setErrorMsg(res.error);
+      } else if (res?.success && res.voter) {
+        setActiveVoter(res.voter);
+        setVoteState('CANDIDATES');
+      }
+    });
+  };
+
+  const handleSelectCandidate = (candidate: CandidateProps) => {
+    setSelectedCandidate(candidate);
+    if (event.voteConfirmation) {
+      setVoteState('CONFIRMATION');
+    } else {
+      handleCastVote(candidate.id);
+    }
+  };
+
+  const handleCastVote = async (candidateId: string) => {
+    if (!activeVoter) return;
+    setErrorMsg(null);
+    startTransition(async () => {
+      const res = await castVoteAction(slug, event.id, candidateId, activeVoter.id);
+      if (res?.error) {
+        setErrorMsg(res.error);
+        setVoteState('CANDIDATES');
+      } else if (res?.success) {
+        setVoteState('SUCCESS');
+        confettiBurst();
+      }
+    });
+  };
+
+  const confettiBurst = () => {
+    import('canvas-confetti').then((confetti) => {
+      confetti.default({
+        particleCount: 80,
+        spread: 60,
+        origin: { y: 0.6 }
+      });
+    });
+  };
+
+  const handleExit = async () => {
+    await exitVoterSessionAction();
+    setActiveVoter(null);
+    setSelectedCandidate(null);
+    setStudentId('');
+    setVotingPass('');
+    setErrorMsg(null);
+    setVoteState('LOGIN');
+  };
+
+  return (
+    <div className="min-h-screen bg-background flex flex-col justify-between select-none" suppressHydrationWarning>
+      {/* Header */}
+      <header className="bg-card border-b border-border-main py-4 px-8 flex items-center justify-between shadow-xs">
+        <div className="flex items-center gap-3">
+          <div className="w-8.5 h-8.5 rounded-lg bg-brand-primary flex items-center justify-center text-white shadow-xs">
+            <Vote className="w-4.5 h-4.5" />
+          </div>
+          <div>
+            <h2 className="font-display font-extrabold text-sm text-text-main block leading-none">{orgName} Portal</h2>
+            <span className="text-[10px] text-text-muted font-bold block mt-1 leading-none">{event.name}</span>
+          </div>
+        </div>
+      </header>
+
+      {/* Main Body */}
+      <main className="flex-1 flex items-center justify-center p-6">
+        <AnimatePresence mode="wait">
+          
+          {/* LOGIN CARD */}
+          {voteState === 'LOGIN' && (
+            <motion.div
+              key="login"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="w-full max-w-md"
+            >
+              <Card className="p-6 border-border-main bg-card shadow-lg">
+                <div className="text-center space-y-2 mb-6">
+                  <Badge variant="info">ONLINE BALLOT ENTRY</Badge>
+                  <h4 className="text-xl font-display font-extrabold text-text-main">Voter Authentication</h4>
+                  <p className="text-xs text-text-muted">Enter your official Student ID and security passcode to enter.</p>
+                </div>
+
+                {errorMsg && (
+                  <div className="mb-4 p-3.5 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs font-semibold flex items-center gap-2.5">
+                    <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
+                    <span>{errorMsg}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <Input
+                    label="Voter Student ID"
+                    placeholder="e.g. GW-001"
+                    value={studentId}
+                    onChange={(e) => setStudentId(e.target.value)}
+                    required
+                  />
+
+                  <Input
+                    label="Voting Passcode"
+                    type="password"
+                    placeholder="e.g. 889977"
+                    value={votingPass}
+                    onChange={(e) => setVotingPass(e.target.value)}
+                    required
+                  />
+
+                  <Button type="submit" className="w-full h-11 button-gradient mt-4" disabled={isPending}>
+                    {isPending ? 'Verifying...' : 'Sign In to Ballot'}
+                  </Button>
+                </form>
+
+                {/* Security info */}
+                <div className="mt-6 border-t border-border-main pt-4 text-[10px] text-text-muted leading-relaxed flex items-center gap-2">
+                  <Lock className="w-3.5 h-3.5 text-brand-primary shrink-0" />
+                  <span>Your ballot is encrypted and submitted anonymously according to privacy protocols.</span>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* CANDIDATE SELECT ROSTER */}
+          {voteState === 'CANDIDATES' && activeVoter && (
+            <motion.div
+              key="candidates"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              className="w-full max-w-4xl space-y-6"
+            >
+              <div className="text-center space-y-1">
+                <h3 className="text-2xl font-display font-extrabold text-text-main">Voter Ballot</h3>
+                <p className="text-xs text-text-muted">Logged in as: <strong>{activeVoter.name}</strong></p>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {candidates.map((cand: any) => (
+                  <Card key={cand.id} hoverLift className="flex flex-col justify-between p-6 bg-card border-border-main border relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-12 h-12 bg-brand-primary/10 text-brand-primary flex items-center justify-center font-display font-black text-sm rounded-bl-2xl">
+                      #{cand.number}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="w-12 h-12 rounded-2xl bg-brand-primary/5 flex items-center justify-center text-brand-primary border border-brand-primary/10">
+                        <User className="w-6 h-6" />
+                      </div>
+                      
+                      <div>
+                        <h4 className="font-extrabold text-base text-text-main">{cand.name}</h4>
+                        <span className="text-[9px] text-text-muted uppercase font-bold tracking-wider">Candidate #{cand.number}</span>
+                      </div>
+
+                      <div className="space-y-2 text-xs text-text-muted">
+                        <div>
+                          <strong className="text-text-main block">Vision</strong>
+                          <p className="leading-relaxed mt-0.5">{cand.vision || '—'}</p>
+                        </div>
+                        <div>
+                          <strong className="text-text-main block">Missions</strong>
+                          <p className="leading-relaxed mt-0.5">{cand.mission || '—'}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t border-border-main mt-6">
+                      <Button onClick={() => handleSelectCandidate(cand)} className="w-full button-gradient font-bold h-10" disabled={isPending}>
+                        Select Candidate
+                      </Button>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </motion.div>
+          )}
+
+          {/* BALLOT CONFIRMATION */}
+          {voteState === 'CONFIRMATION' && activeVoter && selectedCandidate && (
+            <motion.div
+              key="confirmation"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm"
+            >
+              <Card className="p-6 text-center border border-border-main shadow-xl space-y-6">
+                <div className="w-14 h-14 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mx-auto">
+                  <HelpCircle className="w-7 h-7" />
+                </div>
+
+                <div className="space-y-1">
+                  <h4 className="text-lg font-bold text-text-main">Submit Your Vote?</h4>
+                  <p className="text-xs text-text-muted">You are voting for Candidate #{selectedCandidate.number}:</p>
+                </div>
+
+                <div className="p-4 bg-background border border-border-main rounded-xl text-left">
+                  <strong className="text-text-main text-sm block">{selectedCandidate.name}</strong>
+                  <span className="text-[10px] text-text-muted mt-1 block leading-relaxed">{selectedCandidate.vision}</span>
+                </div>
+
+                <div className="flex gap-2">
+                  <Button onClick={() => handleCastVote(selectedCandidate.id)} className="flex-1 button-gradient h-10" disabled={isPending}>
+                    Confirm Vote
+                  </Button>
+                  <Button variant="secondary" onClick={() => setVoteState('CANDIDATES')} className="w-24" disabled={isPending}>
+                    Cancel
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+
+          {/* SUCCESS SCREEN */}
+          {voteState === 'SUCCESS' && (
+            <motion.div
+              key="success"
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="w-full max-w-sm"
+            >
+              <Card className="p-8 text-center border border-border-main shadow-2xl space-y-6">
+                <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center text-success mx-auto">
+                  <CheckCircle2 className="w-8 h-8" />
+                </div>
+
+                <div className="space-y-2">
+                  <h4 className="text-xl font-display font-extrabold text-text-main">Vote Submitted!</h4>
+                  <p className="text-xs text-text-muted leading-relaxed">
+                    Thank you. Your vote has been recorded securely and anonymously. You can now close this browser tab.
+                  </p>
+                </div>
+
+                <Button onClick={handleExit} className="w-full" variant="secondary">
+                  Exit Session
+                </Button>
+              </Card>
+            </motion.div>
+          )}
+
+        </AnimatePresence>
+      </main>
+
+      {/* Footer */}
+      <footer className="py-4 border-t border-border-main bg-background/50 text-center text-[10px] text-text-muted uppercase tracking-wider font-semibold">
+        🔒 Votely Encryption Node
+      </footer>
+    </div>
+  );
+}

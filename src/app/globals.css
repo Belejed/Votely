@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;500;600;700;800&display=swap');
+
+@import "tailwindcss";
+
+:root {
+  /* Votely Design System Palette */
+  --bg-primary: #F8F5EF;      /* Warm Cream Background */
+  --bg-card: #FFFFFF;         /* Pure White Cards */
+  --text-primary: #2D1B46;    /* Deep Plum Text */
+  --text-secondary: #5E4E73;  /* Muted Plum Text */
+  --border-primary: #EEE7DA;  /* Cream Border */
+  
+  --brand-primary: #7C3AED;   /* Deep Royal Purple */
+  --brand-secondary: #A78BFA; /* Soft Violet Purple */
+  --brand-accent: #C4B5FD;    /* Pastel Lavender */
+  
+  --success: #10B981;
+  --warning: #F59E0B;
+  --danger: #EF4444;
+
+  --font-outfit: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-jakarta: 'Plus Jakarta Sans', sans-serif;
+}
+
+@theme {
+  --font-sans: var(--font-jakarta);
+  --font-display: var(--font-outfit);
+  
+  --color-background: var(--bg-primary);
+  --color-card: var(--bg-card);
+  --color-text-main: var(--text-primary);
+  --color-text-muted: var(--text-secondary);
+  --color-border-main: var(--border-primary);
+  
+  --color-brand-primary: var(--brand-primary);
+  --color-brand-secondary: var(--brand-secondary);
+  --color-brand-accent: var(--brand-accent);
+  
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-danger: var(--danger);
+
+  --radius-3xl: 24px;
+  --radius-2xl: 18px;
+  --radius-xl: 12px;
+  
+  --animate-pulse-slow: pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Custom Base Styles */
+html, body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-jakarta);
+  scroll-behavior: smooth;
+  min-height: 100vh;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-outfit);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* Scrollbar Customization */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-primary);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--brand-secondary);
+}
+
+/* Glassmorphism Accents */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(238, 231, 218, 0.5);
+}
+
+.glass-panel-dark {
+  background: rgba(45, 27, 70, 0.05);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(45, 27, 70, 0.08);
+}
+
+/* Premium Animations & Glows */
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.25s ease;
+}
+.hover-lift:hover {
+  transform: translateY(-4px) scale(1.01);
+  box-shadow: 0 12px 30px -10px rgba(124, 58, 237, 0.15);
+}
+
+.purple-glow {
+  box-shadow: 0 0 40px -10px rgba(124, 58, 237, 0.2);
+}
+
+.button-gradient {
+  background: linear-gradient(135deg, var(--brand-primary) 0%, #6D28D9 100%);
+  color: #FFFFFF;
+  transition: all 0.2s ease;
+}
+.button-gradient:hover {
+  background: linear-gradient(135deg, #8B5CF6 0%, var(--brand-primary) 100%);
+  box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.4);
+}
+
+/* Mesh Background Anim */
+.bg-mesh {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: -10;
+  background-color: var(--bg-primary);
+  background-image: 
+    radial-gradient(at 10% 20%, rgba(196, 181, 253, 0.25) 0px, transparent 50%),
+    radial-gradient(at 90% 10%, rgba(167, 139, 250, 0.2) 0px, transparent 50%),
+    radial-gradient(at 50% 80%, rgba(124, 58, 237, 0.1) 0px, transparent 50%);
+  background-size: cover;
+  overflow: hidden;
+}
+
+/* Suppress Next.js dev overlay dialog for third-party browser extensions (Brave Shields, Password Managers) */
+nextjs-portal {
+  display: none !important;
+}

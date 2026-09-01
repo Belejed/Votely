@@ -1,0 +1,229 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Plan {
+  FREE
+  PRO
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  STAFF
+}
+
+enum VotingMode {
+  OFFLINE
+  ONLINE
+  HYBRID
+}
+
+enum AuthMethod {
+  QR_ONLY
+  ID_PASS
+  ID_QR
+  EMAIL_OTP
+  WHATSAPP_OTP
+  GOOGLE_LOGIN
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  CLOSED
+  ARCHIVED
+}
+
+model Organization {
+  id             String         @id @default(uuid())
+  name           String
+  slug           String         @unique // e.g. "school-a" -> school-a.votely.app
+  plan           Plan           @default(FREE)
+  logoUrl        String?        @map("logo_url")
+  bannerUrl      String?        @map("banner_url")
+  primaryColor   String         @default("#7C3AED") @map("primary_color")
+  secondaryColor String         @default("#A78BFA") @map("secondary_color")
+  customDomain   String?        @unique @map("custom_domain")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  users          User[]
+  voters         Voter[]
+  events         Event[]
+  auditLogs      AuditLog[]
+  announcements  Announcement[]
+
+  @@map("organizations")
+}
+
+model User {
+  id             String        @id @default(uuid())
+  name           String
+  email          String        @unique
+  passwordHash   String        @map("password_hash")
+  role           Role          @default(ADMIN)
+  organizationId String?       @map("organization_id")
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+
+  auditLogs      AuditLog[]
+
+  @@map("users")
+}
+
+model Voter {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name           String
+  studentId      String?      @map("student_id")
+  class          String?
+  department     String?
+  phone          String?
+  email          String?
+  qrToken        String       @unique @map("qr_token") // e.g. "VTLY-8QP2KD91AX7"
+  votingPass     String       @map("voting_pass") // secure passcode
+  invitationNum  String       @map("invitation_num")
+  customFields   Json?        @map("custom_fields")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+
+  participations EventVoterParticipation[]
+
+  @@unique([organizationId, studentId])
+  @@map("voters")
+}
+
+model Event {
+  id                String       @id @default(uuid())
+  organizationId    String       @map("organization_id")
+  organization      Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  name              String
+  description       String
+  coverImage        String?      @map("cover_image")
+  logo              String?
+  banner            String?
+  startDate         DateTime     @map("start_date")
+  endDate           DateTime     @map("end_date")
+  votingMode        VotingMode   @default(ONLINE) @map("voting_mode")
+  authMethod        AuthMethod   @default(QR_ONLY) @map("auth_method")
+  
+  // Voting Rules
+  allowLiveResult   Boolean      @default(true) @map("allow_live_result")
+  hideRunningResult Boolean      @default(false) @map("hide_running_result")
+  voteConfirmation  Boolean      @default(true) @map("vote_confirmation")
+  anonymousVote     Boolean      @default(true) @map("anonymous_vote")
+  multipleCandidate Boolean      @default(false) @map("multiple_candidate")
+  maxVotes          Int          @default(1) @map("max_votes")
+  autoClose         Boolean      @default(true) @map("auto_close")
+  
+  status            EventStatus  @default(DRAFT)
+  createdAt         DateTime     @default(now()) @map("created_at")
+  updatedAt         DateTime     @updatedAt @map("updated_at")
+
+  candidates        Candidate[]
+  boothSetting      OfflineBoothSetting?
+  votes             Vote[]
+  participations    EventVoterParticipation[]
+
+  @@map("events")
+}
+
+model OfflineBoothSetting {
+  id               String   @id @default(uuid())
+  eventId          String   @unique @map("event_id")
+  event            Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  enableBoothMode  Boolean  @default(true) @map("enable_booth_mode")
+  enableKioskMode  Boolean  @default(false) @map("enable_kiosk_mode")
+  fullscreen       Boolean  @default(false)
+  autoLogout       Boolean  @default(true) @map("auto_logout")
+  autoReturn       Boolean  @default(true) @map("auto_return")
+  idleTimeout      Int      @default(60) @map("idle_timeout") // seconds
+  sessionTimeout   Int      @default(300) @map("session_timeout") // seconds
+  cameraScan       Boolean  @default(true) @map("camera_scan")
+
+  @@map("offline_booth_settings")
+}
+
+model Candidate {
+  id          String   @id @default(uuid())
+  eventId     String   @map("event_id")
+  event       Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  number      Int
+  name        String
+  photoUrl    String?  @map("photo_url")
+  vision      String
+  mission     String
+  socialMedia Json?    @map("social_media") // e.g. { "instagram": "@username" }
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  votes       Vote[]
+
+  @@map("candidates")
+}
+
+// Votes are logged anonymously (if configured) by not linking back to the Voter.
+// Double-voting is prevented via the EventVoterParticipation table.
+model Vote {
+  id          String    @id @default(uuid())
+  eventId     String    @map("event_id")
+  event       Event     @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  candidateId String    @map("candidate_id")
+  candidate   Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  timestamp   DateTime  @default(now()) @map("timestamp")
+  device      String?
+  browser     String?
+  ipAddress   String?   @map("ip_address")
+
+  @@map("votes")
+}
+
+model EventVoterParticipation {
+  id        String   @id @default(uuid())
+  eventId   String   @map("event_id")
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  voterId   String   @map("voter_id")
+  voter     Voter    @relation(fields: [voterId], references: [id], onDelete: Cascade)
+  votedAt   DateTime @default(now()) @map("voted_at")
+  device    String?
+  browser   String?
+  ipAddress String?  @map("ip_address")
+
+  @@unique([eventId, voterId])
+  @@map("event_voter_participations")
+}
+
+model AuditLog {
+  id             String        @id @default(uuid())
+  organizationId String        @map("organization_id")
+  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String?       @map("user_id")
+  user           User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action         String
+  details        String
+  ipAddress      String?       @map("ip_address")
+  createdAt      DateTime      @default(now()) @map("created_at")
+
+  @@map("audit_logs")
+}
+
+model Announcement {
+  id             String       @id @default(uuid())
+  organizationId String       @map("organization_id")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  title          String
+  content        String
+  isPublished    Boolean      @default(true) @map("is_published")
+  createdAt      DateTime     @default(now()) @map("created_at")
+
+  @@map("announcements")
+}
