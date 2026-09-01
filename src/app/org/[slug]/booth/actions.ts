@@ -47,37 +47,53 @@ export async function authenticateVoterAction(
       event.endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     }
 
-    // 3. Find Voter
+    // 3. Find Voter with Flexible Multi-Identifier Authentication
     let voter: any = null;
 
+    const orgVoters = await db.voter.findMany({
+      where: { organizationId: org.id }
+    });
+
     if (credentials.qrToken) {
-      voter = await db.voter.findUnique({
-        where: { qrToken: credentials.qrToken.trim() }
-      });
-      if (!voter || voter.organizationId !== org.id) {
-        return { error: 'Invalid QR Card token.' };
-      }
-    } else if (credentials.studentId && credentials.votingPass) {
-      const sId = credentials.studentId.trim();
-      const sPass = credentials.votingPass.trim();
-
-      const orgVoters = await db.voter.findMany({
-        where: { organizationId: org.id }
-      });
-
-      voter = orgVoters.find(
-        (v: any) => v.studentId && v.studentId.trim().toLowerCase() === sId.toLowerCase()
+      const cleanToken = credentials.qrToken.trim().toUpperCase();
+      voter = orgVoters.find((v: any) => 
+        (v.qrToken && v.qrToken.trim().toUpperCase() === cleanToken) ||
+        (v.votingPass && v.votingPass.trim() === cleanToken) ||
+        (v.invitationNum && v.invitationNum.trim().toUpperCase() === cleanToken)
       );
+      if (!voter) {
+        return { error: 'Token Kartu QR / PIN Pemilih tidak valid.' };
+      }
+    } else if (credentials.votingPass) {
+      const sPass = credentials.votingPass.trim();
+      const sId = (credentials.studentId || '').trim().toLowerCase();
+
+      if (sId) {
+        // Try matching by Student ID / NIS or Name or Invitation Number
+        voter = orgVoters.find((v: any) => {
+          const vId = (v.studentId || '').trim().toLowerCase();
+          const vName = (v.name || '').trim().toLowerCase();
+          const vInv = (v.invitationNum || '').trim().toLowerCase();
+          const passMatch = v.votingPass && v.votingPass.trim() === sPass;
+          return passMatch && (vId === sId || vName === sId || vInv === sId);
+        });
+      }
+
+      // If not matched or no studentId supplied, check PIN uniquely
+      if (!voter) {
+        const pinMatches = orgVoters.filter((v: any) => v.votingPass && v.votingPass.trim() === sPass);
+        if (pinMatches.length === 1) {
+          voter = pinMatches[0];
+        } else if (pinMatches.length > 1 && sId) {
+          voter = pinMatches.find((v: any) => (v.studentId || '').toLowerCase() === sId || (v.name || '').toLowerCase() === sId);
+        }
+      }
 
       if (!voter) {
-        return { error: 'Student ID not found in registered voter roster.' };
-      }
-
-      if (voter.votingPass !== sPass) {
-        return { error: 'Invalid Voting Passcode for ID ' + sId + '.' };
+        return { error: 'Kombinasi NIS / Nama dan PIN Pemilih (6-digit) tidak ditemukan.' };
       }
     } else {
-      return { error: 'Please provide valid credentials.' };
+      return { error: 'Harap masukkan PIN atau scan QR Pemilih.' };
     }
 
     // 4. Verify Voter has not voted in this event

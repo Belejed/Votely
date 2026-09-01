@@ -134,16 +134,22 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
   const downloadTemplate = () => {
     const templateData = [
       {
-        'Nama': 'Ahmad Fauzi',
+        'Nama Lengkap': 'Ahmad Fauzi',
         'NIS / NIK': '212210001',
         'Kelas': '12 MIPA 1',
         'Jurusan': 'MIPA'
       },
       {
-        'Nama': 'Siti Nurhaliza',
+        'Nama Lengkap': 'Siti Nurhaliza',
         'NIS / NIK': '212210002',
         'Kelas': '12 IPS 2',
         'Jurusan': 'IPS'
+      },
+      {
+        'Nama Lengkap': 'Budi Santoso',
+        'NIS / NIK': '212210003',
+        'Kelas': '11 MIPA 2',
+        'Jurusan': 'MIPA'
       }
     ];
 
@@ -189,27 +195,47 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
           return;
         }
 
-        // Map columns dynamically
+        // Map columns dynamically with robust keyword recognition
         const mappedList = rawJson.map((row: any) => {
-          // Find keys dynamically by looking at columns
           const keys = Object.keys(row);
-          const nameKey = keys.find((k: any) => k.toLowerCase() === 'name' || k.toLowerCase() === 'nama') || '';
-          const idKey = keys.find((k: any) => k.toLowerCase().includes('id') || k.toLowerCase().includes('student') || k.toLowerCase().includes('induk')) || '';
-          const classKey = keys.find((k: any) => k.toLowerCase() === 'class' || k.toLowerCase() === 'kelas') || '';
-          const deptKey = keys.find((k: any) => k.toLowerCase().includes('dept') || k.toLowerCase().includes('jurusan') || k.toLowerCase().includes('department')) || '';
-          const phoneKey = keys.find((k: any) => k.toLowerCase().includes('phone') || k.toLowerCase().includes('telp') || k.toLowerCase().includes('kontak') || k.toLowerCase().includes('wa')) || '';
-          const emailKey = keys.find((k: any) => k.toLowerCase().includes('email') || k.toLowerCase().includes('surel')) || '';
+          
+          // Name detection
+          const nameKey = keys.find((k: any) => {
+            const lk = k.toLowerCase().trim();
+            return lk === 'nama' || lk === 'name' || lk.includes('nama lengkap') || lk.includes('full name') || lk.includes('nama');
+          }) || '';
+
+          // Student ID / NIS / NIK detection
+          const idKey = keys.find((k: any) => {
+            const lk = k.toLowerCase().trim();
+            return lk.includes('nis') || lk.includes('nik') || lk.includes('induk') || lk.includes('student') || lk.includes('nomor') || lk === 'id';
+          }) || '';
+
+          // Class detection
+          const classKey = keys.find((k: any) => {
+            const lk = k.toLowerCase().trim();
+            return lk === 'kelas' || lk === 'class' || lk.includes('kelas') || lk.includes('tingkat') || lk.includes('rombel');
+          }) || '';
+
+          // Department / Jurusan detection
+          const deptKey = keys.find((k: any) => {
+            const lk = k.toLowerCase().trim();
+            return lk === 'jurusan' || lk.includes('jurusan') || lk.includes('dept') || lk.includes('department') || lk.includes('kategori') || lk.includes('prodi');
+          }) || '';
+
+          const rawName = row[nameKey] ? String(row[nameKey]).trim() : '';
+          const rawId = row[idKey] ? String(row[idKey]).trim() : null;
+          const rawClass = row[classKey] ? String(row[classKey]).trim() : null;
+          const rawDept = row[deptKey] ? String(row[deptKey]).trim() : null;
 
           return {
-            name: row[nameKey] || 'Anonymous',
-            studentId: row[idKey] || null,
-            class: row[classKey] || null,
-            department: row[deptKey] || null,
-            phone: row[phoneKey] || null,
-            email: row[emailKey] || null,
+            name: rawName || 'Pemilih Terdaftar',
+            studentId: rawId || null,
+            class: rawClass || null,
+            department: rawDept || null,
             customFields: {},
           };
-        });
+        }).filter((item: any) => item.name && item.name !== 'Pemilih Terdaftar' || item.studentId);
 
         // Trigger Server Action
         startTransition(async () => {

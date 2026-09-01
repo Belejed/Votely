@@ -173,6 +173,12 @@ class SupabaseModelAdapter {
     if (TABLES_WITH_UPDATED_AT.has(this.tableName)) {
       payload.updatedAt = args.data.updatedAt ? new Date(args.data.updatedAt).toISOString() : now;
     }
+    if (this.tableName === 'votes') {
+      payload.timestamp = args.data.timestamp ? new Date(args.data.timestamp).toISOString() : now;
+    }
+    if (this.tableName === 'event_voter_participations') {
+      payload.votedAt = args.data.votedAt ? new Date(args.data.votedAt).toISOString() : now;
+    }
 
     const snakePayload = objectToSnake(payload);
     const { data, error } = await supabase.from(this.tableName).insert(snakePayload).select().single();
