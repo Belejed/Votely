@@ -1,14 +1,17 @@
 /**
- * Standard SHA-256 password hasher with universal subtle crypto support
+ * Universal SHA-256 password hasher compatible with Node.js and Next.js / Vercel Edge & Serverless
  */
 export async function hashPassword(password: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'votely_salt_token_2026');
-  
-  let subtle = globalThis.crypto?.subtle;
+
+  // Use globalThis.crypto if available, else dynamically import node crypto
+  const globalCrypto = (globalThis as any).crypto;
+  let subtle = globalCrypto?.subtle;
+
   if (!subtle) {
     const nodeCrypto = await import('crypto');
-    subtle = nodeCrypto.webcrypto.subtle;
+    subtle = (nodeCrypto as any).webcrypto?.subtle;
   }
 
   const hashBuffer = await subtle.digest('SHA-256', data);
