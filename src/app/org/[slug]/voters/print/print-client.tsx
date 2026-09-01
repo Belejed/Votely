@@ -88,7 +88,7 @@ export default function PrintClientPage({
             margin: 1,
             width: 280,
             color: {
-              dark: '#000000',
+              dark: '#2D1B46',
               light: '#ffffff'
             }
           });
@@ -106,18 +106,18 @@ export default function PrintClientPage({
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white text-slate-900 font-bold">
+      <div className="min-h-screen flex items-center justify-center bg-[#F8F5EF] text-[#2D1B46] font-bold">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 rounded-full border-4 border-purple-600 border-t-transparent animate-spin" />
+          <div className="w-10 h-10 rounded-full border-4 border-[#7C3AED] border-t-transparent animate-spin" />
           <span className="text-sm font-black">Menyiapkan Lembar Surat Pemberitahuan Pemilih...</span>
-          <span className="text-xs text-slate-500">Memproses {voters.length} Lembar A4</span>
+          <span className="text-xs text-[#5E4E73]">Memproses {voters.length} Lembar A4</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-900 text-slate-900 p-0 m-0 print:bg-white print:p-0">
+    <div className="min-h-screen bg-[#F8F5EF] text-[#2D1B46] p-0 m-0 print:bg-white print:p-0">
       {/* CSS Print Stylesheet with Exact 1-Page per Sheet Metric Calibration */}
       <style dangerouslySetInnerHTML={{
         __html: `
@@ -128,7 +128,7 @@ export default function PrintClientPage({
             }
             body {
               background: white !important;
-              color: black !important;
+              color: #2D1B46 !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
             }
@@ -147,7 +147,7 @@ export default function PrintClientPage({
               break-after: page !important;
               page-break-after: always !important;
               box-shadow: none !important;
-              border-color: #0f172a !important;
+              border-color: #2D1B46 !important;
               height: 100% !important;
               min-height: 270mm !important;
               padding: 0 !important;
@@ -161,23 +161,23 @@ export default function PrintClientPage({
         `
       }} />
 
-      {/* FLOATING CONTROL PANEL ON THE RIGHT (Hidden on Print) */}
-      <aside className="no-print fixed top-6 right-6 z-50 w-80 bg-slate-950/95 backdrop-blur-xl border-2 border-purple-900/40 rounded-3xl p-5 shadow-2xl space-y-5 text-white max-h-[92vh] overflow-y-auto">
+      {/* FLOATING CONTROL PANEL ON THE RIGHT (VOTELY THEME) */}
+      <aside className="no-print fixed top-6 right-6 z-50 w-80 bg-white/95 backdrop-blur-xl border-2 border-[#EEE7DA] rounded-3xl p-5 shadow-2xl space-y-5 text-[#2D1B46] max-h-[92vh] overflow-y-auto">
         {/* Panel Header */}
-        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-purple-600/20 text-purple-400 flex items-center justify-center font-bold">
+        <div className="flex items-center justify-between border-b border-[#EEE7DA] pb-3.5">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center font-bold">
               <Settings2 className="w-4 h-4" />
             </div>
             <div>
-              <h3 className="text-xs font-black text-white uppercase tracking-wider">Panel Cetak DPT</h3>
-              <p className="text-[10px] text-slate-400">{orgName}</p>
+              <h3 className="text-xs font-black text-[#2D1B46] uppercase tracking-wider">Panel Cetak DPT</h3>
+              <p className="text-[10px] text-[#5E4E73] font-semibold">{orgName}</p>
             </div>
           </div>
 
           <Link
             href={`/org/${slug}/voters`}
-            className="flex items-center gap-1 text-[11px] font-bold text-slate-400 hover:text-white bg-slate-800 hover:bg-slate-700 px-2.5 py-1.5 rounded-lg transition-all"
+            className="flex items-center gap-1 text-[11px] font-bold text-[#5E4E73] hover:text-[#2D1B46] bg-[#F8F5EF] hover:bg-[#EEE7DA] px-3 py-1.5 rounded-xl transition-all border border-[#EEE7DA]"
             title="Kembali ke Direktori Pemilih"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -188,22 +188,22 @@ export default function PrintClientPage({
         {/* Action Button: Cetak PDF */}
         <button
           onClick={() => window.print()}
-          className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-xs py-3 rounded-2xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/30 active:scale-95"
+          className="w-full bg-gradient-to-r from-[#E11D48] via-[#C026D3] to-[#7C3AED] hover:opacity-95 text-white font-black text-xs py-3.5 rounded-2xl cursor-pointer transition-all flex items-center justify-center gap-2 shadow-lg shadow-purple-600/20 active:scale-95"
         >
           <Printer className="w-4 h-4" />
           <span>Cetak Dokumen PDF ({displayedVoters.length})</span>
         </button>
 
         {/* Section 1: Tanggal & Waktu Pelaksanaan */}
-        <div className="space-y-3 bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
-          <span className="text-[10px] uppercase font-black tracking-wider text-purple-400 block">
+        <div className="space-y-3 bg-[#F8F5EF] border border-[#EEE7DA] rounded-2xl p-3.5">
+          <span className="text-[10px] uppercase font-black tracking-wider text-[#7C3AED] block">
             Jadwal di Surat
           </span>
 
-          <div className="space-y-2 text-xs">
+          <div className="space-y-2.5 text-xs">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                <Calendar className="w-3.5 h-3.5 text-purple-400" />
+              <label className="text-[11px] font-bold text-[#2D1B46] flex items-center gap-1.5">
+                <Calendar className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Hari / Tanggal:</span>
               </label>
               <input
@@ -211,13 +211,13 @@ export default function PrintClientPage({
                 value={customDate}
                 onChange={(e) => setCustomDate(e.target.value)}
                 placeholder="e.g. 1 September 2026"
-                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 shadow-inner"
+                className="w-full bg-white text-[#2D1B46] text-xs font-bold px-3 py-2 rounded-xl border border-[#EEE7DA] focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-purple-500/10 shadow-xs"
               />
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                <Clock className="w-3.5 h-3.5 text-purple-400" />
+              <label className="text-[11px] font-bold text-[#2D1B46] flex items-center gap-1.5">
+                <Clock className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Waktu Pelaksanaan:</span>
               </label>
               <input
@@ -225,28 +225,28 @@ export default function PrintClientPage({
                 value={customTime}
                 onChange={(e) => setCustomTime(e.target.value)}
                 placeholder="e.g. 08.00 s.d Selesai"
-                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 shadow-inner"
+                className="w-full bg-white text-[#2D1B46] text-xs font-bold px-3 py-2 rounded-xl border border-[#EEE7DA] focus:outline-none focus:border-[#7C3AED] focus:ring-2 focus:ring-purple-500/10 shadow-xs"
               />
             </div>
           </div>
         </div>
 
         {/* Section 2: Filter Kelas & Format Kertas */}
-        <div className="space-y-3 bg-slate-900/70 border border-slate-800 rounded-2xl p-3.5">
-          <span className="text-[10px] uppercase font-black tracking-wider text-purple-400 block">
+        <div className="space-y-3 bg-[#F8F5EF] border border-[#EEE7DA] rounded-2xl p-3.5">
+          <span className="text-[10px] uppercase font-black tracking-wider text-[#7C3AED] block">
             Filter & Tata Letak
           </span>
 
-          <div className="space-y-2 text-xs">
+          <div className="space-y-2.5 text-xs">
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                <Filter className="w-3.5 h-3.5 text-purple-400" />
+              <label className="text-[11px] font-bold text-[#2D1B46] flex items-center gap-1.5">
+                <Filter className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Filter Kelas:</span>
               </label>
               <select
                 value={classFilter}
                 onChange={(e) => setClassFilter(e.target.value)}
-                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full bg-white text-[#2D1B46] text-xs font-bold px-3 py-2 rounded-xl border border-[#EEE7DA] focus:outline-none focus:border-[#7C3AED] cursor-pointer shadow-xs"
               >
                 <option value="ALL">Semua Kelas ({voters.length} Lembar)</option>
                 {availableClasses.map(cls => (
@@ -258,14 +258,14 @@ export default function PrintClientPage({
             </div>
 
             <div className="space-y-1">
-              <label className="text-[11px] font-bold text-slate-300 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-purple-400" />
+              <label className="text-[11px] font-bold text-[#2D1B46] flex items-center gap-1.5">
+                <Layers className="w-3.5 h-3.5 text-[#7C3AED]" />
                 <span>Ukuran Kertas:</span>
               </label>
               <select
                 value={layout}
                 onChange={(e: any) => setLayout(e.target.value)}
-                className="w-full bg-slate-950 text-white text-xs font-bold px-3 py-2 rounded-xl border border-slate-700 focus:outline-none focus:border-purple-500 cursor-pointer"
+                className="w-full bg-white text-[#2D1B46] text-xs font-bold px-3 py-2 rounded-xl border border-[#EEE7DA] focus:outline-none focus:border-[#7C3AED] cursor-pointer shadow-xs"
               >
                 <option value="1">1 Lembar Penuh A4 (Standar)</option>
                 <option value="2">2 Surat / A4</option>
@@ -276,9 +276,9 @@ export default function PrintClientPage({
         </div>
 
         {/* Panel Footer Status */}
-        <div className="p-3 bg-purple-950/40 border border-purple-900/30 rounded-xl text-center">
-          <p className="text-[11px] font-bold text-purple-200">
-            Total Siap Cetak: <strong className="text-emerald-400 font-black">{displayedVoters.length} Lembar</strong>
+        <div className="p-3 bg-red-50/60 border border-red-200/60 rounded-2xl text-center">
+          <p className="text-[11px] font-bold text-[#2D1B46]">
+            Total Siap Cetak: <strong className="text-red-600 font-black">{displayedVoters.length} Lembar</strong>
           </p>
         </div>
       </aside>
@@ -286,9 +286,9 @@ export default function PrintClientPage({
       {/* PRINT CONTAINER WITH FULL A4 SHEETS */}
       <div className="print-page-container p-4 sm:p-10 max-w-4xl mx-auto space-y-8 print:space-y-0">
         {displayedVoters.length === 0 ? (
-          <div className="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-slate-300 p-8 space-y-3">
-            <p className="font-black text-base text-slate-700">Tidak ada surat pemilih pada filter kelas ini.</p>
-            <p className="text-xs text-slate-500">Pilih opsi "Semua Kelas" pada panel pengaturan di sebelah kanan.</p>
+          <div className="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-[#EEE7DA] p-8 space-y-3 shadow-sm">
+            <p className="font-black text-base text-[#2D1B46]">Tidak ada surat pemilih pada filter kelas ini.</p>
+            <p className="text-xs text-[#5E4E73]">Pilih opsi "Semua Kelas" pada panel pengaturan di sebelah kanan.</p>
           </div>
         ) : (
           displayedVoters.map((voter, index) => {
@@ -297,36 +297,36 @@ export default function PrintClientPage({
             return (
               <div
                 key={voter.id}
-                className="official-a4-letter bg-white text-slate-900 rounded-3xl border-2 border-slate-900/90 p-8 sm:p-12 shadow-2xl print:shadow-none flex flex-col justify-between"
+                className="official-a4-letter bg-white text-[#2D1B46] rounded-3xl border-2 border-[#2D1B46] p-8 sm:p-12 shadow-xl print:shadow-none flex flex-col justify-between"
               >
                 <div>
                   {/* 1. KOP SURAT RESMI DENGAN TEMA VOTELY */}
-                  <div className="border-b-4 border-double border-slate-900 pb-5 mb-6">
+                  <div className="border-b-4 border-double border-[#2D1B46] pb-5 mb-6">
                     <div className="flex items-center justify-between gap-6">
                       {/* Logo Instansi di Kiri */}
                       {logoUrl ? (
-                        <div className="w-20 h-20 rounded-2xl bg-white border-2 border-slate-900/20 p-2 flex items-center justify-center shrink-0 shadow-xs">
+                        <div className="w-20 h-20 rounded-2xl bg-white border-2 border-[#EEE7DA] p-2 flex items-center justify-center shrink-0 shadow-xs">
                           <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         </div>
                       ) : (
-                        <div className="w-18 h-18 rounded-2xl bg-slate-900 text-white flex items-center justify-center font-black text-lg shrink-0 shadow-xs">
-                          <Vote className="w-10 h-10 text-purple-400" />
+                        <div className="w-18 h-18 rounded-2xl bg-red-50 border-2 border-red-200 text-red-600 flex items-center justify-center font-black text-lg shrink-0 shadow-xs">
+                          <Vote className="w-10 h-10" />
                         </div>
                       )}
 
                       {/* Header Teks di Sebelah Kanan Logo (Aligned Right & Clean) */}
                       <div className="flex-1 text-right space-y-0.5">
-                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-slate-600">
+                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-[#5E4E73]">
                           PANITIA PEMILIHAN KETUA & WAKIL KETUA OSIS / SUARA MAHASISWA
                         </h4>
-                        <h1 className="font-black text-2xl sm:text-3xl text-slate-900 uppercase tracking-tight leading-tight">
+                        <h1 className="font-black text-2xl sm:text-3xl text-[#2D1B46] uppercase tracking-tight leading-tight">
                           {orgName}
                         </h1>
                         <div className="flex items-center justify-end gap-2 pt-0.5">
-                          <span className="bg-purple-100 text-purple-800 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-purple-200">
+                          <span className="bg-red-50 text-red-600 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-red-200">
                             KARTU TANDA PEMILIH RESMI (DPT)
                           </span>
-                          <span className="text-xs font-black text-slate-700">
+                          <span className="text-xs font-black text-[#2D1B46]">
                             • {eventName.toUpperCase()}
                           </span>
                         </div>
@@ -335,34 +335,34 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 2. HERO CARD DATA PEMILIH (FULL-WIDTH, MEMBENTANG KE KANAN) */}
-                  <div className="bg-gradient-to-r from-purple-50 via-slate-50 to-purple-50/50 border-2 border-slate-900 rounded-2xl p-5 sm:p-6 mb-6 shadow-xs">
+                  <div className="bg-[#F8F5EF] border-2 border-[#2D1B46] rounded-2xl p-5 sm:p-6 mb-6 shadow-xs">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                       
                       {/* Left Side: Large Voter Name & Badges */}
                       <div className="space-y-1 flex-1 min-w-0">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-purple-700 block">
+                        <span className="text-[10px] font-black uppercase tracking-widest text-[#7C3AED] block">
                           NAMA LENGKAP PEMILIH TETAP
                         </span>
-                        <h2 className="text-2xl sm:text-3xl font-black text-slate-900 uppercase tracking-tight truncate leading-none">
+                        <h2 className="text-2xl sm:text-3xl font-black text-[#2D1B46] uppercase tracking-tight truncate leading-none">
                           {voter.name}
                         </h2>
 
-                        <div className="flex items-center gap-3 pt-2">
-                          <div className="bg-white border border-slate-300 px-3 py-1 rounded-lg text-xs font-black text-purple-900 shadow-2xs">
-                            Kelas: <strong>{voter.class || '—'}</strong>
+                        <div className="flex items-center gap-3 pt-2.5">
+                          <div className="bg-white border border-[#EEE7DA] px-3.5 py-1 rounded-xl text-xs font-black text-[#2D1B46] shadow-xs">
+                            Kelas: <strong className="text-[#7C3AED]">{voter.class || '—'}</strong>
                           </div>
-                          <div className="bg-white border border-slate-300 px-3 py-1 rounded-lg text-xs font-mono font-bold text-slate-800 shadow-2xs">
+                          <div className="bg-white border border-[#EEE7DA] px-3.5 py-1 rounded-xl text-xs font-mono font-bold text-[#5E4E73] shadow-xs">
                             NIS / ID: <strong>{voter.studentId || '—'}</strong>
                           </div>
                         </div>
                       </div>
 
                       {/* Right Side: Large Invitation Badge */}
-                      <div className="text-center sm:text-right shrink-0 bg-white border-2 border-slate-900 rounded-xl p-3.5 shadow-xs">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-slate-500 block">
+                      <div className="text-center sm:text-right shrink-0 bg-white border-2 border-[#2D1B46] rounded-2xl p-3.5 shadow-xs">
+                        <span className="text-[9px] uppercase font-black tracking-widest text-[#5E4E73] block">
                           NO. UNDANGAN DPT
                         </span>
-                        <span className="font-mono font-black text-base sm:text-lg text-slate-900 tracking-wider block mt-0.5">
+                        <span className="font-mono font-black text-base sm:text-lg text-[#2D1B46] tracking-wider block mt-0.5">
                           {voter.invitationNum}
                         </span>
                       </div>
@@ -371,40 +371,40 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 3. TABEL JADWAL & LOKASI PEMUNGUTAN SUARA */}
-                  <div className="bg-slate-50 border-2 border-slate-900/80 rounded-2xl p-5 mb-6 text-xs sm:text-sm shadow-xs">
+                  <div className="bg-[#F8F5EF] border-2 border-[#EEE7DA] rounded-2xl p-5 mb-6 text-xs sm:text-sm shadow-xs">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2.5">
                         <div className="flex items-start gap-2.5">
-                          <Calendar className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                          <Calendar className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 font-bold block text-[11px]">Hari / Tanggal Pelaksanaan</span>
-                            <span className="font-black text-slate-900 text-sm">{customDate}</span>
+                            <span className="text-[#5E4E73] font-bold block text-[11px]">Hari / Tanggal Pelaksanaan</span>
+                            <span className="font-black text-[#2D1B46] text-sm">{customDate}</span>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-2.5">
-                          <Clock className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                          <Clock className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 font-bold block text-[11px]">Waktu Pemungutan Suara</span>
-                            <span className="font-black text-slate-900 text-sm">{customTime}</span>
+                            <span className="text-[#5E4E73] font-bold block text-[11px]">Waktu Pemungutan Suara</span>
+                            <span className="font-black text-[#2D1B46] text-sm">{customTime}</span>
                           </div>
                         </div>
                       </div>
 
                       <div className="space-y-2.5">
                         <div className="flex items-start gap-2.5">
-                          <MapPin className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                          <MapPin className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 font-bold block text-[11px]">Tempat / Lokasi TPS</span>
-                            <span className="font-black text-slate-900 text-sm">Bilik Suara E-Voting Kiosk ({orgName})</span>
+                            <span className="text-[#5E4E73] font-bold block text-[11px]">Tempat / Lokasi TPS</span>
+                            <span className="font-black text-[#2D1B46] text-sm">Bilik Suara E-Voting Kiosk ({orgName})</span>
                           </div>
                         </div>
 
                         <div className="flex items-start gap-2.5">
-                          <ShieldCheck className="w-4 h-4 text-purple-700 shrink-0 mt-0.5" />
+                          <ShieldCheck className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-slate-500 font-bold block text-[11px]">Status Hak Pilih</span>
-                            <span className="font-black text-emerald-700 text-sm">Terverifikasi & Aktif (1 Hak Suara Sah)</span>
+                            <span className="text-[#5E4E73] font-bold block text-[11px]">Status Hak Pilih</span>
+                            <span className="font-black text-emerald-600 text-sm">Terverifikasi & Aktif (1 Hak Suara Sah)</span>
                           </div>
                         </div>
                       </div>
@@ -412,15 +412,15 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 4. KOTAK KREDENSIAL AKSES BILIK SUARA (DIGITAL BALLOT PASS) */}
-                  <div className="border-2 border-slate-900 rounded-2xl p-6 bg-white mb-6 shadow-sm">
+                  <div className="border-2 border-[#2D1B46] rounded-2xl p-6 bg-white mb-6 shadow-sm">
                     <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
                       {/* Left: Large Segmented PIN */}
                       <div className="space-y-3 flex-1 text-center sm:text-left">
                         <div className="space-y-1">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-purple-800 block">
+                          <span className="text-[11px] font-black uppercase tracking-wider text-[#7C3AED] block">
                             KREDENSIAL AKSES BILIK SUARA (DIGITAL PASS)
                           </span>
-                          <h4 className="font-black text-base text-slate-900">
+                          <h4 className="font-black text-base text-[#2D1B46]">
                             KODE PIN RAHASIA PEMILIH (6-DIGIT):
                           </h4>
                         </div>
@@ -430,22 +430,22 @@ export default function PrintClientPage({
                           {pinDigits.map((digit, dIdx) => (
                             <span 
                               key={dIdx}
-                              className="w-10 h-12 sm:w-11 sm:h-13 rounded-xl bg-purple-50/50 border-2 border-slate-900 text-slate-900 font-mono font-black text-xl flex items-center justify-center shadow-xs"
+                              className="w-10 h-12 sm:w-11 sm:h-13 rounded-xl bg-[#F8F5EF] border-2 border-[#2D1B46] text-[#2D1B46] font-mono font-black text-xl flex items-center justify-center shadow-xs"
                             >
                               {digit}
                             </span>
                           ))}
                         </div>
 
-                        <p className="text-[11px] text-slate-500 italic pt-1 leading-relaxed">
+                        <p className="text-[11px] text-[#5E4E73] italic pt-1 leading-relaxed">
                           * Jaga kerahasiaan PIN ini. Jangan berikan kepada siapa pun demi keaslian suara Anda.
                         </p>
                       </div>
 
                       {/* Right: Big Crisp QR Code with bottom padding */}
-                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-slate-200 pl-0 sm:pl-6 pb-2">
+                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-[#EEE7DA] pl-0 sm:pl-6 pb-2">
                         {qrUrls[voter.qrToken] ? (
-                          <div className="p-2 bg-white border-2 border-slate-900 rounded-2xl shadow-sm">
+                          <div className="p-2 bg-white border-2 border-[#2D1B46] rounded-2xl shadow-sm">
                             <img 
                               src={qrUrls[voter.qrToken]} 
                               alt="QR Token" 
@@ -453,11 +453,11 @@ export default function PrintClientPage({
                             />
                           </div>
                         ) : (
-                          <div className="w-36 h-36 bg-slate-100 rounded-2xl border-2 border-dashed border-slate-300 flex items-center justify-center">
-                            <QrCode className="w-10 h-10 text-slate-400" />
+                          <div className="w-36 h-36 bg-[#F8F5EF] rounded-2xl border-2 border-dashed border-[#EEE7DA] flex items-center justify-center">
+                            <QrCode className="w-10 h-10 text-[#5E4E73]" />
                           </div>
                         )}
-                        <span className="text-[9px] font-mono font-black uppercase tracking-widest text-slate-700 mt-2 block">
+                        <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D1B46] mt-2 block">
                           SCAN TOKEN DI BILIK
                         </span>
                       </div>
@@ -465,9 +465,9 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 5. PETUNJUK COBLOS DI BILIK SUARA */}
-                  <div className="text-xs text-slate-700 bg-slate-50 border border-slate-300 rounded-xl p-4 mb-6 space-y-1.5">
-                    <strong className="text-slate-900 block font-bold text-xs">PETUNJUK PENGGUNAAN DI BILIK SUARA:</strong>
-                    <ol className="list-decimal pl-5 space-y-1 leading-relaxed text-[11px]">
+                  <div className="text-xs text-[#2D1B46] bg-[#F8F5EF] border border-[#EEE7DA] rounded-xl p-4 mb-6 space-y-1.5">
+                    <strong className="text-[#2D1B46] block font-bold text-xs">PETUNJUK PENGGUNAAN DI BILIK SUARA:</strong>
+                    <ol className="list-decimal pl-5 space-y-1 leading-relaxed text-[11px] text-[#5E4E73]">
                       <li>Bawa lembar ini ke lokasi <strong>Bilik Suara Kiosk (TPS)</strong> yang telah disediakan panitia.</li>
                       <li>Arahkan <strong>QR Code</strong> di atas ke kamera pemindai bilik, atau ketik <strong>PIN 6-Digit</strong> Anda pada layar sentuh.</li>
                       <li>Cermati foto dan visi-misi calon, lalu klik tombol <strong>Coblos</strong> pada Pasangan Calon pilihan Anda.</li>
@@ -477,12 +477,12 @@ export default function PrintClientPage({
                 </div>
 
                 {/* 6. CLEAN BOTTOM SECURITY WATERMARK */}
-                <div className="pt-6 border-t-2 border-slate-300 flex items-center justify-between text-xs text-slate-500 font-medium">
+                <div className="pt-6 border-t-2 border-[#EEE7DA] flex items-center justify-between text-xs text-[#5E4E73] font-medium">
                   <div className="flex items-center gap-2">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span>Dokumen Resmi Panitia Pemilihan • Sah & Terenkripsi</span>
                   </div>
-                  <span className="font-mono font-bold text-slate-600">
+                  <span className="font-mono font-bold text-[#2D1B46]">
                     VOTELY E-VOTING SYSTEM • {orgName.toUpperCase()}
                   </span>
                 </div>
