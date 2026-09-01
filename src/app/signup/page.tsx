@@ -55,8 +55,8 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative select-none" suppressHydrationWarning>
-      <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-text-muted hover:text-brand-primary transition-colors">
+    <div className="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6 relative select-none" suppressHydrationWarning>
+      <Link href="/" className="static sm:absolute sm:top-8 sm:left-8 mb-6 sm:mb-0 self-start flex items-center gap-2 text-xs uppercase tracking-wider font-bold text-text-muted hover:text-brand-primary transition-colors">
         <ArrowLeft className="w-4 h-4" /> Kembali ke Beranda
       </Link>
 

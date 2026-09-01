@@ -242,7 +242,7 @@ export default function AdminLayoutClient({ children, org, session }: AdminLayou
         `}
       >
         {/* Header Navbar */}
-        <header className="h-18 bg-card/85 backdrop-blur-md border-b border-border-main flex items-center justify-between px-8 sticky top-0 z-10">
+        <header className="h-16 sm:h-18 bg-card/90 backdrop-blur-md border-b border-border-main flex items-center justify-between px-4 sm:px-6 md:px-8 sticky top-0 z-20">
           <div className="flex items-center gap-4">
             {/* Mobile Hamburger Trigger */}
             <button 
@@ -294,7 +294,7 @@ export default function AdminLayoutClient({ children, org, session }: AdminLayou
         </header>
 
         {/* Dashboard Workspace Contents with smooth transition wrapper */}
-        <main className={`flex-1 p-4 md:p-8 flex flex-col justify-between overflow-y-auto relative transition-opacity duration-200 ${navigatingHref ? 'opacity-60' : 'opacity-100'}`}>
+        <main className={`flex-1 p-3.5 sm:p-5 md:p-8 flex flex-col justify-between overflow-y-auto relative transition-opacity duration-200 ${navigatingHref ? 'opacity-60' : 'opacity-100'}`}>
           <div className="flex-1">
             {children}
           </div>

@@ -272,7 +272,7 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
           <h3 className="text-3xl font-display font-extrabold text-text-main">Voters Directory</h3>
           <p className="text-sm text-text-muted mt-1">Manage voter credentials, print printable invitations, and import roster files.</p>
         </div>
-        <div className="flex flex-wrap gap-2.5">
+        <div className="flex flex-col sm:flex-row flex-wrap gap-2 sm:gap-2.5 w-full sm:w-auto">
           <Button
             onClick={() => setShowManualForm(!showManualForm)}
             className="button-gradient gap-1.5 h-11 px-4 shadow-md shadow-brand-primary/15 font-bold"
@@ -404,7 +404,7 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
       {/* Main Roster Panel */}
       <Card className="overflow-hidden border-border-main p-0 shadow-xs">
         {/* Table Filter Search Header */}
-        <div className="p-4 border-b border-border-main flex items-center gap-4 bg-background/30">
+        <div className="p-3 sm:p-4 border-b border-border-main flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4 bg-background/30">
           <div className="relative flex-1">
             <Search className="w-4.5 h-4.5 text-text-muted/60 absolute left-3 top-1/2 -translate-y-1/2" />
             <input

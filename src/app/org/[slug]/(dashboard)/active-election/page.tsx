@@ -92,7 +92,7 @@ export default async function ActiveElectionPage({
         </div>
 
         {activeEvent && (
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 sm:gap-3 w-full sm:w-auto">
             <Link href={`/org/${slug}/booth/${activeEvent.id}`} target="_blank">
               <Button className="button-gradient gap-2 h-11 px-5 shadow-md shadow-brand-primary/10 font-bold">
                 <MonitorPlay className="w-4.5 h-4.5" />
@@ -115,7 +115,7 @@ export default async function ActiveElectionPage({
       {activeEvent ? (
         <div className="space-y-8">
           {/* Main Info Card */}
-          <Card className="p-8 border-brand-primary/20 bg-card shadow-lg rounded-3xl relative overflow-hidden">
+          <Card className="p-4 sm:p-6 md:p-8 border-brand-primary/20 bg-card shadow-lg rounded-2xl sm:rounded-3xl relative overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-6 border-b border-border-main">
               <div>
                 <span className="text-xs font-bold text-brand-primary uppercase tracking-wider block mb-1">
