@@ -4,24 +4,48 @@ import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
 
-export async function createEventAction(slug: string, wizardData: any) {
+async function verifyAdminTenant(slug: string, allowedRoles: string[] = ['SUPER_ADMIN', 'ADMIN']) {
   const session = await getAdminSession();
   if (!session) {
     return { error: 'Sesi login telah berakhir. Silakan login kembali.' };
   }
 
-  // Resolve organization ID by slug
-  const org = await db.organization.findUnique({
-    where: { slug },
-  });
-
+  const org = await db.organization.findUnique({ where: { slug } });
   if (!org) {
     return { error: 'Organisasi tidak ditemukan.' };
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-    return { error: 'Unauthorized: tenant boundary violation.' };
+  // Look up user in DB to prevent cookie desynchronization
+  const user = await db.user.findUnique({
+    where: { id: session.userId },
+    include: { organization: true }
+  });
+
+  if (!user) {
+    return { error: 'Akun pengguna tidak ditemukan. Silakan login kembali.' };
   }
+
+  const isSuperAdmin = session.role === 'SUPER_ADMIN' || user.role === 'SUPER_ADMIN';
+  const effectiveRole = user.role;
+
+  if (!isSuperAdmin) {
+    const belongsToOrg = user.organizationId === org.id || user.organization?.slug === slug;
+    if (!belongsToOrg) {
+      return { error: 'Unauthorized: Akun Anda tidak memiliki akses ke instansi ini.' };
+    }
+  }
+
+  if (allowedRoles.length > 0 && !isSuperAdmin && !allowedRoles.includes(effectiveRole)) {
+    return { error: `Unauthorized: Wewenang ini khusus untuk role ${allowedRoles.join('/')}.` };
+  }
+
+  return { session, org, user };
+}
+
+export async function createEventAction(slug: string, wizardData: any) {
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org || !auth.session) return { error: auth.error };
+  const { org, session } = auth;
 
   try {
     const {
@@ -37,7 +61,6 @@ export async function createEventAction(slug: string, wizardData: any) {
       maxVotes,
       autoClose,
       candidates,
-      // Booth settings
       enableBoothMode,
       enableKioskMode,
       fullscreen,
@@ -48,7 +71,6 @@ export async function createEventAction(slug: string, wizardData: any) {
       cameraScan,
     } = wizardData;
 
-    // Archive previously published events in this org so new election is active
     try {
       await db.event.updateMany({
         where: { organizationId: org.id, status: 'PUBLISHED' },
@@ -58,14 +80,13 @@ export async function createEventAction(slug: string, wizardData: any) {
       console.warn('Could not archive previous events:', archErr);
     }
 
-    // 1. Create Event
     const event = await db.event.create({
       data: {
         organizationId: org.id,
         name,
         description: description || '',
         startDate: new Date(),
-        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // Default 7 days
+        endDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
         votingMode,
         authMethod,
         allowLiveResult: allowLiveResult ?? true,
@@ -75,11 +96,10 @@ export async function createEventAction(slug: string, wizardData: any) {
         multipleCandidate: multipleCandidate ?? false,
         maxVotes: parseInt(maxVotes) || 1,
         autoClose: autoClose ?? false,
-        status: wizardData.status || 'PUBLISHED', // Respect draft or live for instant testing
+        status: wizardData.status || 'PUBLISHED',
       },
     });
 
-    // 2. Create Candidates
     if (candidates && candidates.length > 0) {
       await db.candidate.createMany({
         data: candidates.map((c: any, index: number) => ({
@@ -94,7 +114,6 @@ export async function createEventAction(slug: string, wizardData: any) {
       });
     }
 
-    // 3. Create Booth Settings if applicable
     if (votingMode === 'OFFLINE' || votingMode === 'HYBRID') {
       await db.offlineBoothSetting.create({
         data: {
@@ -111,7 +130,6 @@ export async function createEventAction(slug: string, wizardData: any) {
       });
     }
 
-    // 4. Create Audit Log
     try {
       await db.auditLog.create({
         data: {
@@ -138,23 +156,14 @@ export async function createEventAction(slug: string, wizardData: any) {
 }
 
 export async function archiveEventAction(eventId: string, slug: string) {
-  const session = await getAdminSession();
-  if (!session) {
-    return { error: 'Unauthorized.' };
-  }
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org) return { error: auth.error };
+  const { org } = auth;
 
   try {
-    const org = await db.organization.findUnique({ where: { slug } });
-    if (!org) {
-      return { error: 'Organization not found.' };
-    }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
-    }
-
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || !event.organizationId || event.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
     await db.event.update({
       where: { id: eventId },
@@ -172,32 +181,21 @@ export async function archiveEventAction(eventId: string, slug: string) {
 }
 
 export async function deleteEventAction(eventId: string, slug: string) {
-  const session = await getAdminSession();
-  if (!session) {
-    return { error: 'Unauthorized.' };
-  }
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org) return { error: auth.error };
+  const { org } = auth;
 
   try {
-    const org = await db.organization.findUnique({ where: { slug } });
-    if (!org) {
-      return { error: 'Organization not found.' };
-    }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
-    }
-
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || !event.organizationId || event.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
-    // Delete all child relations
     await db.candidate.deleteMany({ where: { eventId } });
     await db.offlineBoothSetting.deleteMany({ where: { eventId } });
     await db.vote.deleteMany({ where: { eventId } });
     await db.eventVoterParticipation.deleteMany({ where: { eventId } });
     
-    // Delete event
     await db.event.delete({
       where: { id: eventId },
     });
@@ -214,28 +212,18 @@ export async function deleteEventAction(eventId: string, slug: string) {
 }
 
 export async function updateCandidatePhotoAction(candidateId: string, photoUrl: string, slug: string) {
-  const session = await getAdminSession();
-  if (!session) return { error: 'Unauthorized.' };
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
-    return { error: 'Unauthorized: Hanya Role Admin yang memiliki wewenang mengubah foto kandidat.' };
-  }
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org) return { error: auth.error };
+  const { org } = auth;
 
   try {
-    const org = await db.organization.findUnique({ where: { slug } });
-    if (!org) {
-      return { error: 'Organization not found.' };
-    }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
-    }
-
     const candidate = await db.candidate.findUnique({
       where: { id: candidateId },
       include: { event: true }
     });
 
     if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
+      return { error: 'Unauthorized: Kandidat tidak ditemukan pada instansi ini.' };
     }
 
     await db.candidate.update({
@@ -253,32 +241,21 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
 }
 
 export async function startEventAction(eventId: string, slug: string) {
-  const session = await getAdminSession();
-  if (!session) {
-    return { error: 'Unauthorized.' };
-  }
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org || !auth.session) return { error: auth.error };
+  const { org, session } = auth;
 
   try {
-    const org = await db.organization.findUnique({ where: { slug } });
-    if (!org) {
-      return { error: 'Organization not found.' };
-    }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
-    }
-
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || !event.organizationId || event.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
-    // Archive other published events
     await db.event.updateMany({
       where: { organizationId: org.id, status: 'PUBLISHED' },
       data: { status: 'ARCHIVED' },
     });
 
-    // Start this event
     await db.event.update({
       where: { id: eventId },
       data: {
@@ -314,23 +291,14 @@ export async function startEventAction(eventId: string, slug: string) {
 }
 
 export async function closeEventAction(eventId: string, slug: string) {
-  const session = await getAdminSession();
-  if (!session) {
-    return { error: 'Unauthorized.' };
-  }
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org || !auth.session) return { error: auth.error };
+  const { org, session } = auth;
 
   try {
-    const org = await db.organization.findUnique({ where: { slug } });
-    if (!org) {
-      return { error: 'Organization not found.' };
-    }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
-    }
-
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || !event.organizationId || event.organizationId !== org.id) {
-      return { error: 'Unauthorized: tenant boundary violation.' };
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
     }
 
     await db.event.update({
@@ -371,54 +339,49 @@ export async function updateCandidateDetailsAction(
   slug: string,
   data: { name: string; vision: string; mission: string; photoUrl?: string | null }
 ) {
-  const session = await getAdminSession();
-  if (!session) return { error: 'Unauthorized.' };
-  if (session.role !== 'SUPER_ADMIN' && session.role !== 'ADMIN') {
-    return { error: 'Unauthorized: Hanya Role Admin yang memiliki wewenang mengedit data profil kandidat.' };
-  }
-
-  const org = await db.organization.findUnique({ where: { slug } });
-  if (!org) return { error: 'Organization not found.' };
-
-  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
-    return { error: 'Unauthorized: tenant boundary violation.' };
-  }
-
-  const candidate = await db.candidate.findUnique({
-    where: { id: candidateId },
-    include: { event: true }
-  });
-
-  if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
-    return { error: 'Candidate not found or unauthorized.' };
-  }
-
-  await db.candidate.update({
-    where: { id: candidateId },
-    data: {
-      name: data.name,
-      vision: data.vision,
-      mission: data.mission,
-      photoUrl: data.photoUrl !== undefined ? data.photoUrl : candidate.photoUrl,
-    }
-  });
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org || !auth.session) return { error: auth.error };
+  const { org, session } = auth;
 
   try {
-    await db.auditLog.create({
+    const candidate = await db.candidate.findUnique({
+      where: { id: candidateId },
+      include: { event: true }
+    });
+
+    if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
+      return { error: 'Unauthorized: Kandidat tidak ditemukan pada instansi ini.' };
+    }
+
+    await db.candidate.update({
+      where: { id: candidateId },
       data: {
-        organizationId: org.id,
-        userId: session.userId,
-        action: 'CANDIDATE_UPDATE',
-        details: `Memperbarui profil calon nomor urut #${candidate.number} (${data.name})`,
+        name: data.name,
+        vision: data.vision,
+        mission: data.mission,
+        photoUrl: data.photoUrl !== undefined ? data.photoUrl : candidate.photoUrl,
       }
     });
-  } catch (err) {
-    console.warn('Audit log error:', err);
+
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: org.id,
+          userId: session.userId,
+          action: 'CANDIDATE_UPDATE',
+          details: `Memperbarui profil calon nomor urut #${candidate.number} (${data.name})`,
+        }
+      });
+    } catch (err) {
+      console.warn('Audit log error:', err);
+    }
+
+    revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/livecount`);
+
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.message || 'Failed to update candidate details.' };
   }
-
-  revalidatePath(`/org/${slug}/active-election`);
-  revalidatePath(`/org/${slug}/events`);
-  revalidatePath(`/org/${slug}/livecount`);
-
-  return { success: true };
 }
