@@ -14,7 +14,10 @@ import {
   Calendar,
   Layers,
   BarChart3,
-  User
+  User,
+  Download,
+  Printer,
+  FileSpreadsheet
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -106,6 +109,38 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
     setSecondsToRefresh(3);
   };
 
+
+  // Export CSV Rekap Hasil Suara
+  const handleExportCSV = () => {
+    if (results.length === 0) return;
+    const selectedEvent = events.find((e: any) => e.id === selectedEventId);
+    const eventName = selectedEvent?.name || 'Pemilihan';
+
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += `REKAPITULASI HASIL PEMILIHAN - ${eventName.toUpperCase()}\r\n`;
+    csvContent += `Instansi: ${orgName}\r\n`;
+    csvContent += `Waktu Export: ${new Date().toLocaleString('id-ID')}\r\n`;
+    csvContent += `Total DPT: ${totalVoters}, Total Suara Masuk: ${totalVotes}, Tingkat Partisipasi: ${turnoutPercent}%\r\n\r\n`;
+    csvContent += 'No Urut,Nama Paslon,Jumlah Suara,Persentase Suara,Status\r\n';
+
+    results.forEach((c: any) => {
+      const pct = totalVotes > 0 ? ((c.votesCount / totalVotes) * 100).toFixed(1) : '0.0';
+      const isLead = currentLeader?.id === c.id ? 'Perolehan Tertinggi' : '-';
+      csvContent += `${c.number},"${c.name}",${c.votesCount},${pct}%,${isLead}\r\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Rekap_Hasil_${slug}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  // State for Print Certificate Modal
+  const [showBeritaAcara, setShowBeritaAcara] = useState(false);
+
   // Turnout calculation
   const turnoutPercent = totalVoters > 0 ? ((totalVotes / totalVoters) * 100).toFixed(1) : '0.0';
 
@@ -157,6 +192,29 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Action Export Buttons */}
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={handleExportCSV}
+              variant="outline"
+              size="sm"
+              className="h-9 px-3.5 rounded-xl border-border-main text-xs font-bold gap-2 hover:bg-brand-primary/5 hover:text-brand-primary shadow-xs"
+              title="Download File CSV Rekapitulasi Suara"
+            >
+              <Download className="w-3.5 h-3.5 text-brand-primary" />
+              <span className="hidden sm:inline">Export CSV</span>
+            </Button>
+
+            <Button
+              onClick={() => setShowBeritaAcara(true)}
+              className="button-gradient h-9 px-3.5 rounded-xl text-xs font-bold gap-2 shadow-sm shadow-brand-primary/20"
+              title="Cetak Berita Acara Resmi Hasil Pemilihan"
+            >
+              <Printer className="w-3.5 h-3.5" />
+              <span>Berita Acara</span>
+            </Button>
           </div>
 
           {/* Polling Switch & Refresh Controls */}
@@ -378,9 +436,92 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
           </div>
         )}
       </div>
+      {/* BERITA ACARA PRINT MODAL */}
+      <AnimatePresence>
+        {showBeritaAcara && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-xs overflow-y-auto">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white text-slate-900 rounded-3xl p-8 max-w-2xl w-full shadow-2xl space-y-6 my-8 print:m-0 print:p-0 print:shadow-none"
+            >
+              <div className="flex items-center justify-between border-b pb-4 print:hidden">
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">Pratinjau Berita Acara Resmi</span>
+                <div className="flex items-center gap-2">
+                  <Button onClick={() => window.print()} className="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold h-9 px-4 rounded-xl gap-2 shadow-sm">
+                    <Printer className="w-3.5 h-3.5" />
+                    <span>Cetak / Simpan PDF</span>
+                  </Button>
+                  <button onClick={() => setShowBeritaAcara(false)} className="w-8 h-8 rounded-xl border flex items-center justify-center text-slate-500 hover:text-slate-900 cursor-pointer">
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Printable Document Content */}
+              <div className="space-y-6 text-center border-2 border-slate-900 p-8 rounded-2xl">
+                <div className="border-b-2 border-slate-900 pb-4 space-y-1">
+                  <h3 className="font-black text-xl tracking-tight uppercase">BERITA ACARA REKAPITULASI HASIL PEMILIHAN</h3>
+                  <h4 className="font-bold text-base text-purple-700">{events.find((e: any) => e.id === selectedEventId)?.name || 'Pemilihan Umum'}</h4>
+                  <p className="text-xs text-slate-600 uppercase font-semibold">{orgName} • TAHUN {new Date().getFullYear()}</p>
+                </div>
+
+                <div className="text-left text-xs space-y-2 leading-relaxed">
+                  <p>
+                    Pada hari ini <strong>{new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</strong>, telah dilaksanakan rekapitulasi penghitungan suara secara elektronik melalui sistem e-voting Votely dengan rincian sebagai berikut:
+                  </p>
+                  <ul className="list-disc pl-5 font-semibold space-y-1">
+                    <li>Total Pemilih Terdaftar (DPT): {totalVoters} Orang</li>
+                    <li>Total Suara Masuk (Sah): {totalVotes} Suara</li>
+                    <li>Tingkat Partisipasi Pemilih: {turnoutPercent}%</li>
+                  </ul>
+                </div>
+
+                {/* Table of Results */}
+                <div className="overflow-hidden border border-slate-800 rounded-xl">
+                  <table className="w-full text-xs text-left border-collapse">
+                    <thead className="bg-slate-100 border-b border-slate-800 font-black">
+                      <tr>
+                        <th className="p-2.5 text-center">No</th>
+                        <th className="p-2.5">Nama Pasangan Calon</th>
+                        <th className="p-2.5 text-right">Perolehan Suara</th>
+                        <th className="p-2.5 text-right">Persentase</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-300 font-medium">
+                      {results.map((c: any) => (
+                        <tr key={c.id}>
+                          <td className="p-2.5 text-center font-bold">#{c.number}</td>
+                          <td className="p-2.5 font-bold">{c.name}</td>
+                          <td className="p-2.5 text-right font-black">{c.votesCount} Suara</td>
+                          <td className="p-2.5 text-right font-bold">{totalVotes > 0 ? ((c.votesCount / totalVotes) * 100).toFixed(1) : '0.0'}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Signatures Area */}
+                <div className="pt-8 grid grid-cols-2 gap-8 text-center text-xs">
+                  <div className="space-y-12">
+                    <p className="font-bold">Ketua Panitia Pemilihan</p>
+                    <p className="border-t border-slate-400 pt-1 font-semibold">( ............................................ )</p>
+                  </div>
+                  <div className="space-y-12">
+                    <p className="font-bold">Saksi / Pengawas Pemilihan</p>
+                    <p className="border-t border-slate-400 pt-1 font-semibold">( ............................................ )</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
 
 function Crown(props: any) {
   return <Award {...props} />;

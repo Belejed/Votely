@@ -10,6 +10,8 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
+  ChevronLeft,
+  ChevronRight,
   FileSpreadsheet, 
   Search, 
   Trash, 
@@ -59,6 +61,33 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
   const [search, setSearch] = useState('');
   const [selectedClass, setSelectedClass] = useState<string>('ALL');
   const [sortBy, setSortBy] = useState<'name_asc' | 'name_desc' | 'class_asc' | 'id_asc' | 'recent'>('class_asc');
+  
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 30;
+
+  // Export DPT to Excel
+  const handleExportDPTExcel = () => {
+    if (voters.length === 0) return;
+    const exportData = voters.map((v, i) => ({
+      'No': i + 1,
+      'Nama Lengkap': v.name,
+      'NIS / Student ID': v.studentId || '-',
+      'Kelas': v.class || '-',
+      'Jurusan': v.department || '-',
+      'Nomor Undangan': v.invitationNum,
+      'QR Token': v.qrToken,
+      'PIN Pemilih (6-Digit)': v.votingPass,
+      'Status Memilih': v.hasVoted ? 'Sudah Memilih' : 'Belum Memilih',
+      'No HP': v.phone || '-',
+      'Email': v.email || '-',
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(exportData);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'DPT Pemilih');
+    XLSX.writeFile(workbook, `DPT_${slug}_${new Date().toISOString().split('T')[0]}.xlsx`);
+  };
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
 
@@ -160,6 +189,12 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
       return (new Date(b.createdAt).getTime()) - (new Date(a.createdAt).getTime());
     });
   }, [voters, search, selectedClass, sortBy]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredVoters.length / pageSize));
+  const paginatedVoters = useMemo(() => {
+    const start = (currentPage - 1) * pageSize;
+    return filteredVoters.slice(start, start + pageSize);
+  }, [filteredVoters, currentPage, pageSize]);
 
   // Excel Template Download Handler
   const downloadTemplate = () => {
@@ -338,6 +373,17 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
             <span>{showManualForm ? 'Tutup Form' : 'Tambah Pemilih Manual'}</span>
           </Button>
 
+          <Button
+            onClick={handleExportDPTExcel}
+            variant="outline"
+            className="border-border-main hover:bg-brand-primary/5 hover:text-brand-primary gap-1.5 h-11 px-4 font-bold text-xs"
+            disabled={isPending || voters.length === 0}
+            title="Download seluruh data DPT ke file Excel (.xlsx)"
+          >
+            <Download className="w-4 h-4 text-brand-primary" />
+            <span>Export DPT (.xlsx)</span>
+          </Button>
+
           <div className="relative">
             <input
               type="file"
@@ -349,7 +395,7 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
             <Button 
               onClick={() => document.getElementById('excel-upload')?.click()}
               variant="outline"
-              className="gap-1.5 h-11 px-4 border-border-main font-bold hover:bg-brand-primary/5"
+              className="gap-1.5 h-11 px-4 border-border-main font-bold hover:bg-brand-primary/5 text-xs"
               disabled={isPending}
             >
               <FileSpreadsheet className="w-4.5 h-4.5 text-success" />
@@ -468,7 +514,7 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
               type="text"
               placeholder="Search voters by name, class, department, or student ID..."
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setCurrentPage(1); }}
               className="w-full h-10 pl-10 pr-4 bg-background border border-border-main rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-primary/40 focus:border-brand-primary/50 text-text-main"
             />
           </div>
@@ -502,7 +548,7 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-main/55 text-sm">
-                {filteredVoters.map((voter: any) => (
+                {paginatedVoters.map((voter: any) => (
                   <tr key={voter.id} className="hover:bg-background/25 transition-colors">
                     <td className="py-3.5 px-6">
                       <div className="font-bold text-text-main leading-tight">{voter.name}</div>
@@ -582,11 +628,48 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
               </tbody>
             </table>
           ) : (
-            <div className="text-center py-12 text-text-muted">
-              No voters registered matching search criteria. Upload an Excel roster to begin.
+            <div className="text-center py-12 text-text-muted text-xs font-semibold">
+              Tidak ada data pemilih yang sesuai kriteria pencarian.
             </div>
           )}
         </div>
+
+        {/* Pagination Bar */}
+        {filteredVoters.length > 0 && (
+          <div className="p-4 bg-background/50 border-t border-border-main flex flex-col sm:flex-row items-center justify-between gap-4 text-xs font-bold text-text-muted">
+            <div>
+              Menampilkan <span className="text-text-main font-black">{Math.min((currentPage - 1) * pageSize + 1, filteredVoters.length)}</span> - <span className="text-text-main font-black">{Math.min(currentPage * pageSize, filteredVoters.length)}</span> dari <span className="text-brand-primary font-black">{filteredVoters.length}</span> pemilih terdaftar
+            </div>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                className="h-8 px-3 rounded-lg border-border-main text-xs font-bold gap-1"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                <span>Prev</span>
+              </Button>
+
+              <span className="px-3 py-1 bg-card border border-border-main rounded-lg text-text-main font-black">
+                {currentPage} / {totalPages}
+              </span>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                className="h-8 px-3 rounded-lg border-border-main text-xs font-bold gap-1"
+              >
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        )}
       </Card>
 
       {/* Roster Template Instructions Card */}

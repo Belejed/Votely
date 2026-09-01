@@ -362,3 +362,57 @@ export async function closeEventAction(eventId: string, slug: string) {
     return { error: error?.message || 'Failed to close election.' };
   }
 }
+
+export async function updateCandidateDetailsAction(
+  candidateId: string,
+  slug: string,
+  data: { name: string; vision: string; mission: string; photoUrl?: string | null }
+) {
+  const session = await getAdminSession();
+  if (!session) return { error: 'Unauthorized.' };
+
+  const org = await db.organization.findUnique({ where: { slug } });
+  if (!org) return { error: 'Organization not found.' };
+
+  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    return { error: 'Unauthorized: tenant boundary violation.' };
+  }
+
+  const candidate = await db.candidate.findUnique({
+    where: { id: candidateId },
+    include: { event: true }
+  });
+
+  if (!candidate || candidate.event.organizationId !== org.id) {
+    return { error: 'Candidate not found or unauthorized.' };
+  }
+
+  await db.candidate.update({
+    where: { id: candidateId },
+    data: {
+      name: data.name,
+      vision: data.vision,
+      mission: data.mission,
+      photoUrl: data.photoUrl !== undefined ? data.photoUrl : candidate.photoUrl,
+    }
+  });
+
+  try {
+    await db.auditLog.create({
+      data: {
+        organizationId: org.id,
+        userId: session.userId,
+        action: 'CANDIDATE_UPDATE',
+        details: `Memperbarui profil calon nomor urut #${candidate.number} (${data.name})`,
+      }
+    });
+  } catch (err) {
+    console.warn('Audit log error:', err);
+  }
+
+  revalidatePath(`/org/${slug}/active-election`);
+  revalidatePath(`/org/${slug}/events`);
+  revalidatePath(`/org/${slug}/livecount`);
+
+  return { success: true };
+}

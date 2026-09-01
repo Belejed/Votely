@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useTransition } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { 
   Vote, 
@@ -23,9 +25,11 @@ import {
   RefreshCw,
   Lock,
   Sparkles,
-  AlertCircle
+  AlertCircle,
+  Camera,
+  Edit
 } from 'lucide-react';
-import { startEventAction, closeEventAction, updateCandidatePhotoAction } from '../events/actions';
+import { startEventAction, closeEventAction, updateCandidatePhotoAction, updateCandidateDetailsAction } from '../events/actions';
 
 interface CandidateProps {
   id: string;
@@ -72,6 +76,40 @@ export default function ActiveElectionClient({
   const [isPending, startTransition] = useTransition();
   const [statusMsg, setStatusMsg] = useState<{ type: 'success' | 'danger'; text: string } | null>(null);
   const [confirmAction, setConfirmAction] = useState<'START' | 'CLOSE' | null>(null);
+
+  // Edit Candidate Modal State
+  const [editingCandidate, setEditingCandidate] = useState<any | null>(null);
+  const [editName, setEditName] = useState('');
+  const [editVision, setEditVision] = useState('');
+  const [editMission, setEditMission] = useState('');
+  const [editPhotoUrl, setEditPhotoUrl] = useState<string | null>(null);
+
+  const openEditCandidateModal = (cand: any) => {
+    setEditingCandidate(cand);
+    setEditName(cand.name);
+    setEditVision(cand.vision || '');
+    setEditMission(cand.mission || '');
+    setEditPhotoUrl(cand.photoUrl || null);
+  };
+
+  const handleSaveCandidateDetails = () => {
+    if (!editingCandidate) return;
+    setStatusMsg(null);
+    startTransition(async () => {
+      const res = await updateCandidateDetailsAction(editingCandidate.id, slug, {
+        name: editName,
+        vision: editVision,
+        mission: editMission,
+        photoUrl: editPhotoUrl,
+      });
+      if (res?.error) {
+        setStatusMsg({ type: 'danger', text: res.error });
+      } else {
+        setStatusMsg({ type: 'success', text: `Data Paslon #${editingCandidate.number} berhasil diperbarui!` });
+        setEditingCandidate(null);
+      }
+    });
+  };
 
   const handleStartElection = () => {
     if (!event) return;
@@ -465,6 +503,78 @@ export default function ActiveElectionClient({
           ))}
         </div>
       </div>
+      {/* EDIT CANDIDATE MODAL */}
+      <AnimatePresence>
+        {editingCandidate && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-card border-2 border-border-main rounded-3xl p-6 sm:p-8 max-w-lg w-full shadow-2xl space-y-6"
+            >
+              <div className="flex items-center justify-between border-b border-border-main pb-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-primary font-black flex items-center justify-center">
+                    #{editingCandidate.number}
+                  </div>
+                  <div>
+                    <h4 className="font-black text-lg text-text-main">Edit Paslon #{editingCandidate.number}</h4>
+                    <p className="text-xs text-text-muted">Perbarui nama lengkap, visi, misi, dan foto calon</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setEditingCandidate(null)}
+                  className="w-8 h-8 rounded-xl bg-background border border-border-main text-text-muted hover:text-text-main flex items-center justify-center cursor-pointer"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <Input
+                  label="Nama Lengkap Paslon / Kandidat"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Contoh: Muhammad Rizky & Aisyah Putri"
+                />
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Visi Paslon</label>
+                  <textarea
+                    rows={3}
+                    value={editVision}
+                    onChange={(e) => setEditVision(e.target.value)}
+                    placeholder="Tuliskan visi utama kandidat..."
+                    className="w-full bg-background border border-border-main rounded-xl p-3 text-xs font-medium text-text-main focus:outline-none focus:border-brand-primary"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <label className="text-xs font-semibold uppercase tracking-wider text-text-muted">Misi Paslon</label>
+                  <textarea
+                    rows={4}
+                    value={editMission}
+                    onChange={(e) => setEditMission(e.target.value)}
+                    placeholder="Tuliskan poin-poin misi kandidat..."
+                    className="w-full bg-background border border-border-main rounded-xl p-3 text-xs font-medium text-text-main focus:outline-none focus:border-brand-primary"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-3 pt-2 border-t border-border-main">
+                <Button variant="ghost" onClick={() => setEditingCandidate(null)} disabled={isPending} className="text-xs font-bold rounded-xl h-10">
+                  Batal
+                </Button>
+                <Button onClick={handleSaveCandidateDetails} disabled={isPending} className="button-gradient text-xs font-bold rounded-xl h-10 px-5 shadow-md shadow-brand-primary/20">
+                  {isPending ? 'Menyimpan...' : 'Simpan Perubahan Paslon'}
+                </Button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
+
