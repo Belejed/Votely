@@ -16,7 +16,7 @@ export async function loginAction(prevState: any, formData: FormData) {
   try {
     // 1. Find Organization
     const allOrgs = await db.organization.findMany();
-    const org = allOrgs.find((o) => o.slug && o.slug.toLowerCase().trim() === orgSlug);
+    const org = allOrgs.find((o: any) => o.slug && o.slug.toLowerCase().trim() === orgSlug);
 
     if (!org) {
       return { error: `Kode instansi "${orgSlug}" tidak ditemukan. Silakan periksa kembali.` };
@@ -27,7 +27,7 @@ export async function loginAction(prevState: any, formData: FormData) {
       where: { organizationId: org.id }
     });
 
-    const user = usersInOrg.find((u) => {
+    const user = usersInOrg.find((u: any) => {
       const uName = (u.name || '').toLowerCase().trim();
       const uEmail = (u.email || '').toLowerCase().trim();
       const uEmailPrefix = uEmail.split('@')[0];

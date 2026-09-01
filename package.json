@@ -12,6 +12,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.4.0",
     "@prisma/client": "^6.19.3",
+    "@supabase/supabase-js": "^2.112.4",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "firebase-admin": "^14.2.0",
