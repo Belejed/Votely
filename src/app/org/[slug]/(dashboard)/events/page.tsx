@@ -72,19 +72,19 @@ export default async function EventsListPage({
   const handleArchive = async (formData: FormData) => {
     'use server';
     const eventId = formData.get('eventId') as string;
-    await archiveEventAction(eventId, org.id, slug);
+    await archiveEventAction(eventId, slug);
   };
 
   const handleDelete = async (formData: FormData) => {
     'use server';
     const eventId = formData.get('eventId') as string;
-    await deleteEventAction(eventId, org.id, slug);
+    await deleteEventAction(eventId, slug);
   };
 
   const handleStart = async (formData: FormData) => {
     'use server';
     const eventId = formData.get('eventId') as string;
-    await startEventAction(eventId, org.id, slug);
+    await startEventAction(eventId, slug);
   };
 
   return (

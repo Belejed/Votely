@@ -34,6 +34,11 @@ export async function saveThemeAction(
     return { error: 'Tenant boundary violation.' };
   }
 
+  const hexRegex = /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/;
+  if (!hexRegex.test(primaryColor) || !hexRegex.test(secondaryColor)) {
+    return { error: 'Format warna tidak valid.' };
+  }
+
   try {
     await db.organization.update({
       where: { id: org.id },

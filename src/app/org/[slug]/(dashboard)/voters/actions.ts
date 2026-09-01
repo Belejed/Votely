@@ -3,25 +3,26 @@
 import { db } from '@/lib/db';
 import { getAdminSession } from '@/lib/session';
 import { revalidatePath } from 'next/cache';
+import { randomInt } from 'crypto';
 
 // Helper to generate secure random QR token
 function generateQrToken(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let token = 'VTLY-';
   for (let i = 0; i < 11; i++) {
-    token += chars.charAt(Math.floor(Math.random() * chars.length));
+    token += chars.charAt(randomInt(0, chars.length));
   }
   return token;
 }
 
 // Helper to generate random 6-digit voting pass
 function generateVotingPass(): string {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return randomInt(100000, 1000000).toString();
 }
 
 // Helper to generate unique invitation number
 function generateInvitationNum(): string {
-  return 'INV-' + Math.floor(10000 + Math.random() * 90000).toString();
+  return 'INV-' + randomInt(10000, 100000).toString();
 }
 
 export async function importVotersAction(slug: string, voterList: any[]) {
@@ -108,26 +109,31 @@ export async function resetVoterStatusAction(voterId: string, slug: string) {
   if (!session) return { error: 'Unauthorized.' };
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) return { error: 'Organization not found.' };
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const voter = await db.voter.findUnique({ where: { id: voterId } });
+    if (!voter || voter.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     // 1. Delete all event participations for this voter
     await db.eventVoterParticipation.deleteMany({
       where: { voterId }
     });
 
-    // 2. Fetch voter details
-    const voter = await db.voter.findUnique({
-      where: { id: voterId }
+    // 2. Audit log (voter already fetched above for tenant check)
+    await db.auditLog.create({
+      data: {
+        organizationId: voter.organizationId,
+        userId: session.userId,
+        action: 'VOTER_RESET',
+        details: `Reset voting participation status for voter: ${voter.name}`,
+      }
     });
-
-    if (voter) {
-      await db.auditLog.create({
-        data: {
-          organizationId: voter.organizationId,
-          userId: session.userId,
-          action: 'VOTER_RESET',
-          details: `Reset voting participation status for voter: ${voter.name}`,
-        }
-      });
-    }
 
     revalidatePath(`/org/${slug}/voters`);
     return { success: true };
@@ -142,6 +148,17 @@ export async function deleteVoterAction(voterId: string, slug: string) {
   if (!session) return { error: 'Unauthorized.' };
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) return { error: 'Organization not found.' };
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const voterCheck = await db.voter.findUnique({ where: { id: voterId } });
+    if (!voterCheck || voterCheck.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     // 1. Delete associated event participations first
     await db.eventVoterParticipation.deleteMany({
       where: { voterId }
@@ -180,6 +197,17 @@ export async function regenerateVoterPassAction(voterId: string, slug: string) {
   if (!session) return { error: 'Unauthorized.' };
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) return { error: 'Organization not found.' };
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const voterCheck = await db.voter.findUnique({ where: { id: voterId } });
+    if (!voterCheck || voterCheck.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     const voter = await db.voter.update({
       where: { id: voterId },
       data: {
@@ -226,6 +254,10 @@ export async function createSingleVoterAction(
 
   if (!org) {
     return { error: 'Organisasi tidak ditemukan.' };
+  }
+  
+  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    return { error: 'Unauthorized: tenant boundary violation.' };
   }
 
   const name = (data.name || '').trim();

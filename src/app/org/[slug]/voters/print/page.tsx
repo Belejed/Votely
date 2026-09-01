@@ -1,6 +1,7 @@
 import React from 'react';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { db } from '@/lib/db';
+import { getAdminSession } from '@/lib/session';
 import PrintClientPage from './print-client';
 
 export default async function PrintVotersPage({
@@ -13,6 +14,15 @@ export default async function PrintVotersPage({
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
   const layout = resolvedSearchParams.layout || '4';
+
+  // SECURITY: Require authenticated admin session
+  const session = await getAdminSession();
+  if (!session) {
+    redirect('/login');
+  }
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug) {
+    redirect('/login');
+  }
   const voterId = resolvedSearchParams.voterId;
   const classFilter = resolvedSearchParams.classFilter;
   const sortBy = resolvedSearchParams.sortBy || 'class_asc';

@@ -98,14 +98,9 @@ export default async function BoothPage({
     socialMedia: c.socialMedia,
   }));
 
-  const serializedVoters = voters.map((v: any) => ({
-    id: v.id,
-    name: v.name,
-    studentId: v.studentId,
-    qrToken: v.qrToken,
-    votingPass: v.votingPass,
-    class: v.class
-  }));
+  // NOTE: We do NOT serialize voter credentials (qrToken, votingPass) to client props.
+  // That would expose secrets to anyone viewing the page source / network tab.
+  // Voter authentication happens server-side in booth/actions.ts.
 
   const serializedSettings = event.boothSetting ? {
     enableBoothMode: event.boothSetting.enableBoothMode,
@@ -142,7 +137,6 @@ export default async function BoothPage({
       slug={slug} 
       orgName={org.name}
       logoUrl={org.logoUrl || null}
-      voters={serializedVoters}
       poster={posterConfig}
     />
   );

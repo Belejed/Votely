@@ -7,7 +7,7 @@ export async function middleware(req: NextRequest) {
   const hostname = req.headers.get('host') || '';
   const path = url.pathname;
 
-  // Skip static files, API routes, Next.js internals, and public root routes
+  // Skip static files, API routes, Next.js internals
   if (
     path.startsWith('/_next') ||
     path.startsWith('/api') ||
@@ -24,8 +24,7 @@ export async function middleware(req: NextRequest) {
     path === '/signup' || 
     path.startsWith('/superadmin');
 
-  // Detect subdomain/tenant for custom domains (e.g., sman71.votely.id or sman71.localhost:3000)
-  // Do NOT treat vercel.app default project names (e.g. votely-sooty.vercel.app) as subdomains
+  // Detect subdomain/tenant for custom domains
   let subdomain: string | null = null;
   const isVercelApp = hostname.endsWith('.vercel.app');
 
@@ -39,15 +38,29 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // Rewrite subdomain requests to organization routes only if not already under /org/ and not a public path
+  // Resolve the effective path for auth checks
+  // If subdomain request, compute the rewritten path FIRST, then check auth on it
+  let effectivePath = path;
+  let needsRewrite = false;
+
   if (subdomain && !isPublicRootPath && !path.startsWith('/org/')) {
-    url.pathname = `/org/${subdomain}${path}`;
-    return NextResponse.rewrite(url);
+    effectivePath = `/org/${subdomain}${path}`;
+    needsRewrite = true;
   }
 
-  // Route Protection & Session Checks
-  const isAdminDashboard = path.includes('/dashboard') || path.includes('/events') || path.includes('/voters') || path.includes('/active-election') || path.includes('/livecount');
-  const isSuperAdmin = path.startsWith('/superadmin');
+  // Route Protection & Session Checks — runs on EFFECTIVE path (including subdomain rewrites)
+  const isAdminDashboard = 
+    effectivePath.includes('/dashboard') || 
+    effectivePath.includes('/events') || 
+    effectivePath.includes('/voters') || 
+    effectivePath.includes('/active-election') || 
+    effectivePath.includes('/livecount') ||
+    effectivePath.includes('/theme') ||
+    effectivePath.includes('/users') ||
+    effectivePath.includes('/audit') ||
+    effectivePath.includes('/announcements');
+
+  const isSuperAdmin = effectivePath.startsWith('/superadmin');
 
   if (isAdminDashboard) {
     const adminToken = req.cookies.get('votely_admin_session')?.value;
@@ -61,7 +74,7 @@ export async function middleware(req: NextRequest) {
     }
 
     // Check tenant boundary if accessing via /org/[slug]/*
-    const orgPathMatch = path.match(/^\/org\/([^/]+)/);
+    const orgPathMatch = effectivePath.match(/^\/org\/([^/]+)/);
     if (orgPathMatch) {
       const pathOrg = orgPathMatch[1];
       if (adminSession.role !== 'SUPER_ADMIN' && adminSession.organizationSlug !== pathOrg) {
@@ -81,6 +94,12 @@ export async function middleware(req: NextRequest) {
     }
   }
 
+  // Perform subdomain rewrite AFTER auth checks pass
+  if (needsRewrite) {
+    url.pathname = effectivePath;
+    return NextResponse.rewrite(url);
+  }
+
   return NextResponse.next();
 }
 
@@ -89,3 +108,4 @@ export const config = {
     '/((?!api|_next/static|_next/image|favicon.ico).*)',
   ],
 };
+

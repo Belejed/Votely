@@ -19,13 +19,8 @@ export async function createEventAction(slug: string, wizardData: any) {
     return { error: 'Organisasi tidak ditemukan.' };
   }
 
-  // Verify boundary (allow if matching orgId or orgSlug or SUPER_ADMIN)
-  if (
-    session.role !== 'SUPER_ADMIN' && 
-    session.organizationId !== org.id &&
-    session.organizationSlug !== slug
-  ) {
-    return { error: 'Akses ditolak: Anda tidak memiliki izin pada organisasi ini.' };
+  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    return { error: 'Unauthorized: tenant boundary violation.' };
   }
 
   try {
@@ -142,13 +137,25 @@ export async function createEventAction(slug: string, wizardData: any) {
   }
 }
 
-export async function archiveEventAction(eventId: string, orgId: string, slug: string) {
+export async function archiveEventAction(eventId: string, slug: string) {
   const session = await getAdminSession();
-  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+  if (!session) {
     return { error: 'Unauthorized.' };
   }
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) {
+      return { error: 'Organization not found.' };
+    }
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const event = await db.event.findUnique({ where: { id: eventId } });
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
     await db.event.update({
       where: { id: eventId },
       data: { status: 'ARCHIVED' },
@@ -164,13 +171,26 @@ export async function archiveEventAction(eventId: string, orgId: string, slug: s
   }
 }
 
-export async function deleteEventAction(eventId: string, orgId: string, slug: string) {
+export async function deleteEventAction(eventId: string, slug: string) {
   const session = await getAdminSession();
-  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+  if (!session) {
     return { error: 'Unauthorized.' };
   }
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) {
+      return { error: 'Organization not found.' };
+    }
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const event = await db.event.findUnique({ where: { id: eventId } });
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     // Delete all child relations
     await db.candidate.deleteMany({ where: { eventId } });
     await db.offlineBoothSetting.deleteMany({ where: { eventId } });
@@ -198,6 +218,23 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
   if (!session) return { error: 'Unauthorized.' };
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) {
+      return { error: 'Organization not found.' };
+    }
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const candidate = await db.candidate.findUnique({
+      where: { id: candidateId },
+      include: { event: true }
+    });
+
+    if (!candidate || candidate.event.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     await db.candidate.update({
       where: { id: candidateId },
       data: { photoUrl },
@@ -212,16 +249,29 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
   }
 }
 
-export async function startEventAction(eventId: string, orgId: string, slug: string) {
+export async function startEventAction(eventId: string, slug: string) {
   const session = await getAdminSession();
-  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+  if (!session) {
     return { error: 'Unauthorized.' };
   }
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) {
+      return { error: 'Organization not found.' };
+    }
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const event = await db.event.findUnique({ where: { id: eventId } });
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     // Archive other published events
     await db.event.updateMany({
-      where: { organizationId: orgId, status: 'PUBLISHED' },
+      where: { organizationId: org.id, status: 'PUBLISHED' },
       data: { status: 'ARCHIVED' },
     });
 
@@ -238,7 +288,7 @@ export async function startEventAction(eventId: string, orgId: string, slug: str
     try {
       await db.auditLog.create({
         data: {
-          organizationId: orgId,
+          organizationId: org.id,
           userId: session.userId,
           action: 'EVENT_START',
           details: `Panitia memulai pemungutan suara serentak untuk pemilihan ID ${eventId}`,
@@ -260,13 +310,26 @@ export async function startEventAction(eventId: string, orgId: string, slug: str
   }
 }
 
-export async function closeEventAction(eventId: string, orgId: string, slug: string) {
+export async function closeEventAction(eventId: string, slug: string) {
   const session = await getAdminSession();
-  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+  if (!session) {
     return { error: 'Unauthorized.' };
   }
 
   try {
+    const org = await db.organization.findUnique({ where: { slug } });
+    if (!org) {
+      return { error: 'Organization not found.' };
+    }
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
+    const event = await db.event.findUnique({ where: { id: eventId } });
+    if (!event || event.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     await db.event.update({
       where: { id: eventId },
       data: {
@@ -278,7 +341,7 @@ export async function closeEventAction(eventId: string, orgId: string, slug: str
     try {
       await db.auditLog.create({
         data: {
-          organizationId: orgId,
+          organizationId: org.id,
           userId: session.userId,
           action: 'EVENT_CLOSE',
           details: `Panitia resmi menutup pemungutan suara untuk pemilihan ID ${eventId}`,

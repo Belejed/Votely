@@ -33,7 +33,7 @@ export default async function AnnouncementsPage({
     title: a.title,
     content: a.content,
     isPublished: a.isPublished,
-    createdAt: a.createdAt.toISOString(),
+    createdAt: a.createdAt instanceof Date ? a.createdAt.toISOString() : String(a.createdAt || new Date().toISOString()),
   }));
 
   return (

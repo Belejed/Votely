@@ -39,6 +39,10 @@ export async function createStaffUserAction(
       return { error: 'Organisasi tidak ditemukan.' };
     }
 
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
+    }
+
     // Check if username is already taken in this organization
     const orgUsers = await db.user.findMany({
       where: { organizationId: org.id }
@@ -110,6 +114,10 @@ export async function deleteStaffUserAction(slug: string, userId: string) {
 
     if (!org) {
       return { error: 'Organisasi tidak ditemukan.' };
+    }
+
+    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+      return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const targetUser = await db.user.findUnique({

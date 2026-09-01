@@ -20,15 +20,22 @@ export default async function OrgBaseLayout({
     redirect('/login');
   }
 
+  const sanitizeColor = (color: string | null, defaultColor: string) => {
+    return color && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(color) ? color : defaultColor;
+  };
+
+  const primaryColor = sanitizeColor(org.primaryColor, '#7C3AED');
+  const secondaryColor = sanitizeColor(org.secondaryColor, '#A78BFA');
+
   return (
     <div className="min-h-screen bg-background text-text-main relative" suppressHydrationWarning>
       {/* Dynamic Brand Color Theme Injector */}
       <style dangerouslySetInnerHTML={{
         __html: `
           :root {
-            --brand-primary: ${org.primaryColor || '#7C3AED'};
-            --brand-secondary: ${org.secondaryColor || '#A78BFA'};
-            --brand-accent: ${org.secondaryColor}40;
+            --brand-primary: ${primaryColor};
+            --brand-secondary: ${secondaryColor};
+            --brand-accent: ${secondaryColor}40;
           }
         `
       }} />

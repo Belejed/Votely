@@ -78,7 +78,7 @@ export default function ActiveElectionClient({
     setStatusMsg(null);
     setConfirmAction(null);
     startTransition(async () => {
-      const res = await startEventAction(event.id, event.organizationId, slug);
+      const res = await startEventAction(event.id, slug);
       if (res?.error) {
         setStatusMsg({ type: 'danger', text: res.error });
       } else {
@@ -137,7 +137,7 @@ export default function ActiveElectionClient({
     setStatusMsg(null);
     setConfirmAction(null);
     startTransition(async () => {
-      const res = await closeEventAction(event.id, event.organizationId, slug);
+      const res = await closeEventAction(event.id, slug);
       if (res?.error) {
         setStatusMsg({ type: 'danger', text: res.error });
       } else {

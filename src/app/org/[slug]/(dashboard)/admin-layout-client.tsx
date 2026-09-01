@@ -74,6 +74,7 @@ export default function AdminLayoutClient({ children, org, session }: AdminLayou
     { label: 'Voters Importer', href: `/org/${org.slug}/voters`, icon: UsersRound, roles: ['SUPER_ADMIN', 'ADMIN', 'STAFF'] },
     { label: 'Live Result Count', href: `/org/${org.slug}/livecount`, icon: TrendingUp, roles: ['SUPER_ADMIN', 'ADMIN', 'STAFF', 'OBSERVER'] },
     { label: 'Events Wizard', href: `/org/${org.slug}/events`, icon: CalendarDays, roles: ['SUPER_ADMIN', 'ADMIN'] },
+    { label: 'Pengumuman', href: `/org/${org.slug}/announcements`, icon: Megaphone, roles: ['SUPER_ADMIN', 'ADMIN', 'STAFF'] },
     { label: 'Panitia & Staff', href: `/org/${org.slug}/users`, icon: UserCog, roles: ['SUPER_ADMIN', 'ADMIN'] },
     { label: 'Theme Builder', href: `/org/${org.slug}/theme`, icon: Palette, roles: ['SUPER_ADMIN', 'ADMIN'] },
     { label: 'Audit Logs', href: `/org/${org.slug}/audit`, icon: History, roles: ['SUPER_ADMIN', 'ADMIN', 'OBSERVER'] },

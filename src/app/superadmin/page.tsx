@@ -187,7 +187,7 @@ export default async function SuperAdminConsolePage() {
                           {org.slug}.votely.app
                         </td>
                         <td className="py-3.5 px-4 font-semibold text-text-muted">
-                          {org.voters.length} Voters • {org.events.length} Elections
+                          {(org.voters?.length || 0)} Voters • {(org.events?.length || 0)} Elections
                         </td>
                         <td className="py-3.5 px-4 font-bold">
                           <Badge variant="success" className="font-bold">

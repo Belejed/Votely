@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/lib/db';
-import { setVoterSession, clearVoterSession } from '@/lib/session';
+import { setVoterSession, getVoterSession, clearVoterSession } from '@/lib/session';
 import { headers } from 'next/headers';
 
 export async function authenticateVoterAction(
@@ -32,19 +32,10 @@ export async function authenticateVoterAction(
       return { error: 'This election is not currently open for voting.' };
     }
 
-    // Check dates
+    // Check dates — reject if outside voting window
     let now = new Date();
     if (now < new Date(event.startDate) || now > new Date(event.endDate)) {
-      // Auto-adjust demo election to be active now for seamless testing
-      await db.event.update({
-        where: { id: event.id },
-        data: {
-          startDate: new Date(now.getTime() - 2 * 60 * 60 * 1000), // 2 hours ago
-          endDate: new Date(now.getTime() + 24 * 60 * 60 * 1000),  // 24 hours from now
-        }
-      });
-      event.startDate = new Date(now.getTime() - 2 * 60 * 60 * 1000);
-      event.endDate = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      return { error: 'Pemilihan belum dibuka atau sudah ditutup. Hubungi panitia.' };
     }
 
     // 3. Find Voter with Flexible Multi-Identifier Authentication
@@ -146,6 +137,15 @@ export async function castVoteAction(
   voterId: string
 ) {
   try {
+    // 0. SECURITY: Verify voter session cookie — reject unauthenticated requests
+    const voterSession = await getVoterSession();
+    if (!voterSession) {
+      return { error: 'Sesi pemilih tidak valid atau sudah berakhir. Silakan login ulang.' };
+    }
+    if (voterSession.voterId !== voterId || voterSession.eventId !== eventId) {
+      return { error: 'Sesi pemilih tidak cocok. Silakan login ulang.' };
+    }
+
     // 1. Fetch metadata for logs (IP, Device, Browser)
     const headersList = await headers();
     const userAgent = headersList.get('user-agent') || 'Unknown';
