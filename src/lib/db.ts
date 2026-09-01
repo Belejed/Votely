@@ -75,6 +75,17 @@ class SupabaseModelAdapter {
     if (!where) return query;
     for (const [key, val] of Object.entries(where)) {
       if (val === undefined) continue;
+
+      // Handle compound keys like organizationId_studentId: { organizationId, studentId }
+      if (key.includes('_') && typeof val === 'object' && val !== null && !('equals' in val) && !('in' in val) && !('not' in val)) {
+        for (const [subK, subV] of Object.entries(val)) {
+          if (subV !== undefined) {
+            query = query.eq(toSnakeCase(subK), subV instanceof Date ? subV.toISOString() : subV);
+          }
+        }
+        continue;
+      }
+
       const snakeKey = toSnakeCase(key);
 
       if (typeof val === 'object' && val !== null && !(val instanceof Date)) {

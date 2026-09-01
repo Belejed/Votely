@@ -53,12 +53,10 @@ export async function importVotersAction(slug: string, voterList: any[]) {
 
       // If studentId exists, make sure it is unique for this organization
       if (studentId) {
-        const existing = await db.voter.findUnique({
+        const existing = await db.voter.findFirst({
           where: {
-            organizationId_studentId: {
-              organizationId: org.id,
-              studentId: studentId
-            }
+            organizationId: org.id,
+            studentId: studentId
           }
         });
         if (existing) {
@@ -144,23 +142,36 @@ export async function deleteVoterAction(voterId: string, slug: string) {
   if (!session) return { error: 'Unauthorized.' };
 
   try {
+    // 1. Delete associated event participations first
+    await db.eventVoterParticipation.deleteMany({
+      where: { voterId }
+    });
+
+    // 2. Delete voter record
     const voter = await db.voter.delete({
       where: { id: voterId }
     });
 
-    await db.auditLog.create({
-      data: {
-        organizationId: voter.organizationId,
-        userId: session.userId,
-        action: 'VOTER_DELETE',
-        details: `Deleted voter registration: ${voter.name}`,
-      }
-    });
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: voter.organizationId,
+          userId: session.userId,
+          action: 'VOTER_DELETE',
+          details: `Deleted voter registration: ${voter.name}`,
+        }
+      });
+    } catch (auditErr) {
+      console.warn('Audit log failed during delete voter:', auditErr);
+    }
 
     revalidatePath(`/org/${slug}/voters`);
+    revalidatePath(`/org/${slug}/dashboard`);
+    revalidatePath(`/org/${slug}/active-election`);
     return { success: true };
-  } catch (error) {
-    return { error: 'Failed to delete voter.' };
+  } catch (error: any) {
+    console.error('Delete voter error:', error);
+    return { error: error?.message || 'Failed to delete voter.' };
   }
 }
 
