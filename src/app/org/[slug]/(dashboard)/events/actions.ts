@@ -91,6 +91,7 @@ export async function createEventAction(slug: string, wizardData: any) {
           eventId: event.id,
           number: index + 1,
           name: c.name,
+          photoUrl: c.photoUrl || null,
           vision: c.vision || '',
           mission: c.mission || '',
           socialMedia: c.socialMedia || {},
