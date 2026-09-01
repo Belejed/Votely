@@ -124,7 +124,7 @@ export default function ElectionGatewayPage() {
 
       {/* Footer */}
       <footer className="h-16 border-t border-border-main/50 flex items-center justify-between px-6 sm:px-12 text-xs text-text-muted font-medium z-10">
-        <span>© 2026 Votely by arya • Sistem E-Voting Mandiri</span>
+        <span>© 2026 Votely by Belejed • Sistem E-Voting Mandiri</span>
         <div className="flex items-center gap-4">
           <Link href="/login" className="hover:text-brand-primary transition-colors">Login Panitia</Link>
           <Link href="/signup" className="hover:text-brand-primary transition-colors">Daftar</Link>

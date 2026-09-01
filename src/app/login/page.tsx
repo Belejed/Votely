@@ -70,7 +70,7 @@ function LoginFormContent() {
               <span className="font-display font-extrabold text-2xl tracking-tight text-text-main block leading-none">
                 Votely
               </span>
-              <span className="text-[10px] text-text-muted font-bold block mt-0.5">by arya</span>
+              <span className="text-[10px] text-text-muted font-bold block mt-0.5">by Belejed</span>
             </div>
           </div>
         </div>

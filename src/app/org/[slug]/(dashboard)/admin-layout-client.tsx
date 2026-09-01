@@ -306,7 +306,7 @@ export default function AdminLayoutClient({ children, org, session }: AdminLayou
                 V
               </div>
               <span>
-                © 2026 <strong className="text-text-main font-black">Votely by arya</strong> • Sistem E-Voting Mandiri
+                © 2026 <strong className="text-text-main font-black">Votely by Belejed</strong> • Sistem E-Voting Mandiri
               </span>
             </div>
             <div className="flex items-center gap-3 text-[11px] font-semibold text-text-muted">

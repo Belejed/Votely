@@ -1,4 +1,4 @@
-# 🗳️ Votely by arya
+# 🗳️ Votely by Belejed
 
 > **Modern, Multi-Tenant Electronic Voting (E-Voting) Platform** designed for Schools, Universities, and Organizations. Built with Next.js 16, TypeScript, Tailwind CSS, and Supabase PostgreSQL.
 
@@ -209,5 +209,5 @@ Open [http://localhost:3000](http://localhost:3000) in your browser to view the 
 
 ## 📄 License & Credits
 
-Developed with ❤️ by **Arya**  
-**Votely by arya** • Sistem E-Voting Mandiri & Terverifikasi
+Developed with ❤️ by **Belejed**  
+**Votely by Belejed** • Sistem E-Voting Mandiri & Terverifikasi
