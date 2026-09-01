@@ -526,13 +526,13 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                     </div>
 
                     <div className="space-y-3.5">
-                      {/* Proportional Photo Frame */}
-                      <div className="w-full h-44 rounded-2xl overflow-hidden bg-background border border-border-main flex items-center justify-center relative">
+                      {/* 3:4 Official Portrait Photo Frame */}
+                      <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
                         {cand.photoUrl ? (
-                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover" />
+                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
                         ) : (
-                          <div className="flex flex-col items-center justify-center gap-1.5 text-brand-primary">
-                            <User className="w-10 h-10 opacity-40" />
+                          <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
+                            <User className="w-12 h-12 opacity-40" />
                             <span className="font-black text-sm">Paslon #{cand.number}</span>
                           </div>
                         )}
