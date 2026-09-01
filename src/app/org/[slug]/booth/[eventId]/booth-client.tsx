@@ -57,6 +57,8 @@ interface BoothClientProps {
     hideRunningResult: boolean;
     voteConfirmation: boolean;
     anonymousVote: boolean;
+    multipleCandidate?: boolean;
+    maxVotes?: number;
     status: string;
   };
   candidates: CandidateProps[];
@@ -91,6 +93,72 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
   // Voter & Ballot State
   const [activeVoter, setActiveVoter] = useState<{ id: string; name: string; studentId: string | null } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProps | null>(null);
+  const [selectedCandidates, setSelectedCandidates] = useState<CandidateProps[]>([]);
+
+  const isMultiVote = Boolean(event.multipleCandidate && (event.maxVotes || 2) > 1);
+  const maxVotes = event.maxVotes || 2;
+
+  const handleToggleCandidate = (candidate: CandidateProps) => {
+    if (!isMultiVote) {
+      handleSelectCandidate(candidate);
+      return;
+    }
+
+    setSelectedCandidates((prev) => {
+      const exists = prev.some((c) => c.id === candidate.id);
+      if (exists) {
+        return prev.filter((c) => c.id !== candidate.id);
+      } else {
+        if (prev.length >= maxVotes) {
+          return [...prev.slice(1), candidate];
+        }
+        return [...prev, candidate];
+      }
+    });
+  };
+
+  const handleProceedMultiConfirmation = () => {
+    if (selectedCandidates.length === 0) return;
+    if (event.voteConfirmation) {
+      setBoothState('CONFIRMATION');
+    } else {
+      handleCastMultipleVotes();
+    }
+  };
+
+  const handleCastMultipleVotes = async () => {
+    if (!activeVoter || selectedCandidates.length === 0) return;
+    setIsPending(true);
+    setErrorMsg(null);
+    try {
+      const candidateIds = selectedCandidates.map((c) => c.id);
+      const res = await castVoteAction(slug, event.id, candidateIds, activeVoter.id);
+      if (res?.error) {
+        setErrorMsg(res.error);
+        setBoothState('CANDIDATES');
+      } else if (res?.success) {
+        setBoothState('SUCCESS');
+        confetti({
+          particleCount: 100,
+          spread: 80,
+          origin: { y: 0.6 }
+        });
+        setSuccessCountdown(5);
+        successTimerRef.current = setInterval(() => {
+          setSuccessCountdown((prev) => {
+            if (prev <= 1) {
+              clearInterval(successTimerRef.current);
+            }
+            return Math.max(0, prev - 1);
+          });
+        }, 1000);
+      }
+    } catch (err) {
+      console.error("Votely Scanner: Error casting multi-vote:", err);
+    } finally {
+      setIsPending(false);
+    }
+  };
 
   // Form State
   const [manualId, setManualId] = useState('');
@@ -355,6 +423,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
     await exitVoterSessionAction();
     setActiveVoter(null);
     setSelectedCandidate(null);
+    setSelectedCandidates([]);
     setManualId('');
     setManualPass('');
     setErrorMsg(null);
@@ -624,11 +693,27 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
               )}
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidates.map((cand: any) => (
-                  <Card key={cand.id} hoverLift className="flex flex-col justify-between p-5 bg-card border-2 border-border-main hover:border-brand-primary/60 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl">
+                {candidates.map((cand: any) => {
+                  const isSelected = isMultiVote 
+                    ? selectedCandidates.some((c) => c.id === cand.id)
+                    : selectedCandidate?.id === cand.id;
+
+                  return (
+                  <Card 
+                    key={cand.id} 
+                    hoverLift 
+                    onClick={() => handleToggleCandidate(cand)}
+                    className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
+                      isSelected 
+                        ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5' 
+                        : 'border-border-main hover:border-brand-primary/60'
+                    }`}
+                  >
                     {/* Candidate Number Floating Badge */}
-                    <div className="absolute top-3 right-3 z-10 w-11 h-11 bg-brand-primary text-white flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md">
-                      #{cand.number}
+                    <div className={`absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md ${
+                      isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
+                    }`}>
+                      {isSelected ? '✓' : `#${cand.number}`}
                     </div>
 
                     <div className="space-y-3.5">
@@ -664,56 +749,107 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                     </div>
 
                     <div className="pt-4 border-t border-border-main mt-4">
-                      <Button onClick={() => handleSelectCandidate(cand)} className="w-full button-gradient font-bold h-12 text-sm shadow-md shadow-brand-primary/20" disabled={isPending}>
-                        Coblos Paslon #{cand.number}
+                      <Button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleToggleCandidate(cand);
+                        }} 
+                        className={`w-full font-bold h-12 text-sm transition-all ${
+                          isSelected 
+                            ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30' 
+                            : 'button-gradient text-white shadow-md shadow-brand-primary/20'
+                        }`} 
+                        disabled={isPending}
+                      >
+                        {isSelected ? `✓ Paslon #${cand.number} Terpilih` : isMultiVote ? `+ Pilih Paslon #${cand.number}` : `Coblos Paslon #${cand.number}`}
                       </Button>
                     </div>
                   </Card>
-                ))}
+                );})}
               </div>
+
+              {/* Multi-Vote Floating Bar in Kiosk */}
+              {isMultiVote && (
+                <div className="sticky bottom-4 left-0 right-0 z-30 pt-2">
+                  <div className="max-w-xl mx-auto bg-card/95 backdrop-blur-md border-2 border-brand-primary rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-brand-primary uppercase tracking-wider">
+                          Pilih {maxVotes} Paslon (OSIS & MPK)
+                        </span>
+                        <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
+                          {selectedCandidates.length} dari {maxVotes} Terpilih
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-text-muted mt-0.5">
+                        {selectedCandidates.length === maxVotes 
+                          ? 'Lengkap! Silakan klik tombol untuk konfirmasi.' 
+                          : `Pilih ${maxVotes - selectedCandidates.length} paslon lagi.`}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleProceedMultiConfirmation}
+                      disabled={selectedCandidates.length === 0 || isPending}
+                      className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
+                    >
+                      <span>Lanjut Konfirmasi ({selectedCandidates.length})</span>
+                      <ArrowRight className="w-4 h-4 ml-1.5" />
+                    </Button>
+                  </div>
+                </div>
+              )}
             </motion.div>
           )}
 
           {/* STATE 3: BALLOT CONFIRMATION */}
-          {boothState === 'CONFIRMATION' && activeVoter && selectedCandidate && (
+          {boothState === 'CONFIRMATION' && activeVoter && (selectedCandidate || selectedCandidates.length > 0) && (
             <motion.div
               key="confirmation"
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="w-full max-w-md"
+              className="w-full max-w-lg"
             >
               <Card className="p-6 text-center border-2 border-brand-primary/10 shadow-2xl space-y-6">
                 <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mx-auto">
                   <HelpCircle className="w-8 h-8" />
                 </div>
                 
-                <div className="space-y-2">
-                  <Badge variant="warning" className="px-3 py-1 font-bold">CONFIRM BALLOT SELECTION</Badge>
-                  <h4 className="text-xl font-display font-extrabold text-text-main">Submit Your Vote?</h4>
+                <div className="space-y-1.5">
+                  <Badge variant="warning" className="px-3 py-1 font-bold">KONFIRMASI SURAT SUARA</Badge>
+                  <h4 className="text-xl font-display font-extrabold text-text-main">
+                    {isMultiVote ? `Konfirmasi ${selectedCandidates.length} Paslon Terpilih?` : 'Kirimkan Suara Anda?'}
+                  </h4>
                   <p className="text-xs text-text-muted px-4 leading-relaxed">
-                    You are casting your official ballot for:
+                    {isMultiVote ? 'Periksa kembali daftar pasangan calon yang Anda pilih (misal OSIS & MPK):' : 'Anda akan memasukkan suara sah untuk:'}
                   </p>
                 </div>
 
-                <div className="p-4 bg-background border border-border-main rounded-2xl text-left space-y-2.5">
-                  <div className="flex items-center gap-2">
-                    <span className="w-7 h-7 rounded-full bg-brand-primary/15 text-brand-primary font-bold text-xs flex items-center justify-center">
-                      {selectedCandidate.number}
-                    </span>
-                    <strong className="text-text-main text-sm">{selectedCandidate.name}</strong>
-                  </div>
-                  <p className="text-xs text-text-muted leading-relaxed pl-9">
-                    <strong>Vision:</strong> {selectedCandidate.vision || 'No vision statement.'}
-                  </p>
+                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
+                  {(isMultiVote ? selectedCandidates : (selectedCandidate ? [selectedCandidate] : [])).map((cand) => (
+                    <div key={cand.id} className="p-3 bg-background border border-border-main rounded-2xl text-left flex items-center gap-3">
+                      <span className="w-8 h-8 rounded-xl bg-brand-primary/15 text-brand-primary font-black text-xs flex items-center justify-center shrink-0">
+                        #{cand.number}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <strong className="text-text-main text-sm block truncate">{cand.name}</strong>
+                        <span className="text-[11px] text-text-muted line-clamp-1 block">{cand.vision || 'Visi & Misi Terdaftar'}</span>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="flex gap-3">
-                  <Button onClick={() => handleCastVote(selectedCandidate.id)} className="flex-1 button-gradient h-11" disabled={isPending}>
-                    {isPending ? 'Registering...' : 'Yes, Confirm Vote'}
+                  <Button 
+                    onClick={isMultiVote ? handleCastMultipleVotes : () => selectedCandidate && handleCastVote(selectedCandidate.id)} 
+                    className="flex-1 button-gradient h-12 font-bold text-sm" 
+                    disabled={isPending}
+                  >
+                    {isPending ? 'Merekam Suara...' : 'Ya, Konfirmasi & Kirim Suara'}
                   </Button>
-                  <Button variant="secondary" onClick={() => setBoothState('CANDIDATES')} className="w-28" disabled={isPending}>
-                    Change
+                  <Button variant="secondary" onClick={() => setBoothState('CANDIDATES')} className="w-28 h-12 font-bold text-xs" disabled={isPending}>
+                    Ubah Pilihan
                   </Button>
                 </div>
               </Card>

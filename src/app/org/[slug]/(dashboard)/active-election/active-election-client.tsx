@@ -30,7 +30,7 @@ import {
   Camera,
   Edit
 } from 'lucide-react';
-import { startEventAction, closeEventAction, updateCandidatePhotoAction, updateCandidateDetailsAction } from '../events/actions';
+import { startEventAction, closeEventAction, updateCandidatePhotoAction, updateCandidateDetailsAction, updateElectionVotingRulesAction } from '../events/actions';
 
 interface CandidateProps {
   id: string;
@@ -54,6 +54,8 @@ interface ActiveElectionClientProps {
     startDate: string;
     endDate: string;
     organizationId: string;
+    multipleCandidate?: boolean;
+    maxVotes?: number;
   } | null;
   candidates: CandidateProps[];
   totalVoters: number;
@@ -84,6 +86,36 @@ export default function ActiveElectionClient({
   const [editVision, setEditVision] = useState('');
   const [editMission, setEditMission] = useState('');
   const [editPhotoUrl, setEditPhotoUrl] = useState<string | null>(null);
+
+  // Multi-Candidate Rules State (e.g. OSIS & MPK 2-votes)
+  const [multiCandidateEnabled, setMultiCandidateEnabled] = useState<boolean>(Boolean(event?.multipleCandidate));
+  const [maxVotesAllowed, setMaxVotesAllowed] = useState<number>(event?.maxVotes || 2);
+  const [isUpdatingRules, setIsUpdatingRules] = useState<boolean>(false);
+
+  const handleToggleMultiCandidateRules = (enabled: boolean, maxVotesNum: number) => {
+    if (!event) return;
+    setIsUpdatingRules(true);
+    setStatusMsg(null);
+    startTransition(async () => {
+      const res = await updateElectionVotingRulesAction(event.id, slug, {
+        multipleCandidate: enabled,
+        maxVotes: maxVotesNum
+      });
+      setIsUpdatingRules(false);
+      if (res?.error) {
+        setStatusMsg({ type: 'danger', text: res.error });
+      } else {
+        setMultiCandidateEnabled(enabled);
+        setMaxVotesAllowed(maxVotesNum);
+        setStatusMsg({ 
+          type: 'success', 
+          text: enabled 
+            ? `Fitur Pilih Multi-Kandidat AKTIF! Pemilih kini dapat mencoblos hingga ${maxVotesNum} kandidat (misal: OSIS & MPK).` 
+            : 'Fitur Multi-Kandidat DINONAKTIFKAN. Pemilih hanya dapat memilih 1 kandidat tunggal.' 
+        });
+      }
+    });
+  };
 
   const openEditCandidateModal = (cand: any) => {
     setEditingCandidate(cand);
@@ -439,6 +471,67 @@ export default function ActiveElectionClient({
           </Card>
         </Link>
       </div>
+
+      {/* Multi-Candidate Selection Rule Control Card */}
+      {(userRole === 'ADMIN' || userRole === 'SUPER_ADMIN') && (
+        <Card className="p-5 bg-card border-2 border-brand-primary/30 rounded-3xl space-y-4 shadow-sm">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-start sm:items-center gap-3.5">
+              <div className="w-11 h-11 rounded-2xl bg-brand-primary/10 text-brand-primary flex items-center justify-center shrink-0">
+                <Vote className="w-6 h-6" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h4 className="font-extrabold text-sm text-text-main">Pilih Multi-Kandidat (Misal: OSIS & MPK)</h4>
+                  <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider ${
+                    multiCandidateEnabled ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' : 'bg-background text-text-muted border border-border-main'
+                  }`}>
+                    {multiCandidateEnabled ? `AKTIF (${maxVotesAllowed} KANDIDAT)` : 'NONAKTIF (1 KANDIDAT)'}
+                  </span>
+                </div>
+                <p className="text-xs text-text-muted mt-0.5">
+                  Izinkan siswa memilih hingga 2 kandidat atau lebih dalam satu surat suara / bilik suara sekaligus.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 shrink-0 self-end sm:self-center">
+              {multiCandidateEnabled && (
+                <div className="flex items-center gap-1.5 bg-background px-3 py-1.5 rounded-xl border border-border-main">
+                  <span className="text-xs font-bold text-text-muted">Batas:</span>
+                  <select
+                    value={maxVotesAllowed}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 2;
+                      setMaxVotesAllowed(val);
+                      handleToggleMultiCandidateRules(true, val);
+                    }}
+                    disabled={isUpdatingRules}
+                    className="bg-card text-xs font-black text-text-main rounded-lg px-2 py-1 border border-border-main focus:outline-none"
+                  >
+                    <option value={2}>2 Kandidat (OSIS + MPK)</option>
+                    <option value={3}>3 Kandidat</option>
+                    <option value={4}>4 Kandidat</option>
+                  </select>
+                </div>
+              )}
+
+              <Button
+                size="sm"
+                onClick={() => handleToggleMultiCandidateRules(!multiCandidateEnabled, maxVotesAllowed)}
+                disabled={isUpdatingRules}
+                className={`text-xs font-extrabold px-4 h-9 rounded-xl transition-all ${
+                  multiCandidateEnabled 
+                    ? 'bg-red-500/10 text-red-600 border border-red-500/30 hover:bg-red-500/20' 
+                    : 'button-gradient text-white shadow-sm'
+                }`}
+              >
+                {isUpdatingRules ? 'Memperbarui...' : multiCandidateEnabled ? 'Matikan Fitur (1 Pilihan)' : 'Aktifkan (Pilih 2 Paslon)'}
+              </Button>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Candidate Roster Cards */}
       <div className="space-y-4 pt-2">

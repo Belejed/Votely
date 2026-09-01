@@ -140,7 +140,7 @@ export async function authenticateVoterAction(
 export async function castVoteAction(
   slug: string,
   eventId: string,
-  candidateId: string,
+  candidateIdsOrId: string | string[],
   voterId: string
 ) {
   try {
@@ -204,16 +204,29 @@ export async function castVoteAction(
         }
       });
 
-      // b. Record anonymous vote
-      await tx.vote.create({
-        data: {
-          eventId,
-          candidateId,
-          device,
-          browser,
-          ipAddress
-        }
-      });
+      // b. Record anonymous votes (supports single or multi candidate selections e.g. OSIS & MPK)
+      const candidateIds = Array.isArray(candidateIdsOrId) ? candidateIdsOrId : [candidateIdsOrId];
+      
+      const event = await tx.event.findUnique({ where: { id: eventId } });
+      const maxAllowed = event?.multipleCandidate ? (event?.maxVotes || 2) : 1;
+      if (candidateIds.length === 0) {
+        throw new Error('Harap pilih minimal 1 kandidat.');
+      }
+      if (candidateIds.length > maxAllowed) {
+        throw new Error(`Pilihan melebihi batas maksimal (${maxAllowed} kandidat).`);
+      }
+
+      for (const cid of candidateIds) {
+        await tx.vote.create({
+          data: {
+            eventId,
+            candidateId: cid,
+            device,
+            browser,
+            ipAddress
+          }
+        });
+      }
 
       // c. Audit Log entry
       await tx.auditLog.create({

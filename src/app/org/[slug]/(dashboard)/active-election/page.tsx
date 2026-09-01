@@ -79,6 +79,8 @@ export default async function ActiveElectionPage({
     startDate: activeEvent.startDate ? new Date(activeEvent.startDate).toISOString() : '',
     endDate: activeEvent.endDate ? new Date(activeEvent.endDate).toISOString() : '',
     organizationId: activeEvent.organizationId,
+    multipleCandidate: activeEvent.multipleCandidate || false,
+    maxVotes: activeEvent.maxVotes || 1,
   } : null;
 
   const serializedCandidates = (activeEvent?.candidates || []).map((cand: any, idx: number) => {

@@ -41,6 +41,8 @@ interface VoteClientProps {
     hideRunningResult: boolean;
     voteConfirmation: boolean;
     anonymousVote: boolean;
+    multipleCandidate?: boolean;
+    maxVotes?: number;
     status: string;
   };
   candidates: CandidateProps[];
@@ -65,6 +67,55 @@ export default function VoteClientPage({ event, candidates, slug, orgName, logoU
   // Voter & Ballot State
   const [activeVoter, setActiveVoter] = useState<{ id: string; name: string; studentId: string | null } | null>(null);
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProps | null>(null);
+  const [selectedCandidates, setSelectedCandidates] = useState<CandidateProps[]>([]);
+
+  const isMultiVote = Boolean(event.multipleCandidate && (event.maxVotes || 2) > 1);
+  const maxVotes = event.maxVotes || 2;
+
+  const handleToggleCandidate = (candidate: CandidateProps) => {
+    if (!isMultiVote) {
+      handleSelectCandidate(candidate);
+      return;
+    }
+
+    setSelectedCandidates((prev) => {
+      const exists = prev.some((c) => c.id === candidate.id);
+      if (exists) {
+        return prev.filter((c) => c.id !== candidate.id);
+      } else {
+        if (prev.length >= maxVotes) {
+          // Replace the oldest selection or keep at max
+          return [...prev.slice(1), candidate];
+        }
+        return [...prev, candidate];
+      }
+    });
+  };
+
+  const handleProceedMultiConfirmation = () => {
+    if (selectedCandidates.length === 0) return;
+    if (event.voteConfirmation) {
+      setVoteState('CONFIRMATION');
+    } else {
+      handleCastMultipleVotes();
+    }
+  };
+
+  const handleCastMultipleVotes = async () => {
+    if (!activeVoter || selectedCandidates.length === 0) return;
+    setErrorMsg(null);
+    startTransition(async () => {
+      const candidateIds = selectedCandidates.map((c) => c.id);
+      const res = await castVoteAction(slug, event.id, candidateIds, activeVoter.id);
+      if (res?.error) {
+        setErrorMsg(res.error);
+        setVoteState('CANDIDATES');
+      } else if (res?.success) {
+        setVoteState('SUCCESS');
+        confettiBurst();
+      }
+    });
+  };
 
   // Manual Login Form
   const [studentId, setStudentId] = useState('');

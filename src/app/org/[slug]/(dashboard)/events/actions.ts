@@ -407,3 +407,52 @@ export async function updateCandidateDetailsAction(
     return { error: error?.message || 'Failed to update candidate details.' };
   }
 }
+
+export async function updateElectionVotingRulesAction(
+  eventId: string,
+  slug: string,
+  rules: { multipleCandidate: boolean; maxVotes: number }
+) {
+  const auth = await verifyAdminTenant(slug, ['SUPER_ADMIN', 'ADMIN']);
+  if (auth.error || !auth.org || !auth.session) return { error: auth.error };
+  const { org, session } = auth;
+
+  try {
+    const event = await db.event.findFirst({
+      where: { id: eventId, organizationId: org.id }
+    });
+    if (!event) {
+      return { error: 'Unauthorized: Pemilihan tidak ditemukan.' };
+    }
+
+    await db.event.update({
+      where: { id: eventId },
+      data: {
+        multipleCandidate: rules.multipleCandidate,
+        maxVotes: rules.maxVotes,
+      }
+    });
+
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: org.id,
+          userId: session.userId,
+          action: 'EVENT_UPDATE_RULES',
+          details: `Mengubah aturan pemilihan multi-kandidat: ${rules.multipleCandidate ? `Aktif (${rules.maxVotes} Paslon)` : 'Nonaktif (1 Paslon)'}`,
+        }
+      });
+    } catch (auditErr) {
+      console.warn('Audit log error:', auditErr);
+    }
+
+    revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/booth/${eventId}`);
+    revalidatePath(`/org/${slug}/vote/${eventId}`);
+
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.message || 'Gagal memperbarui aturan pemilihan.' };
+  }
+}

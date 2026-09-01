@@ -46,6 +46,8 @@ export default async function OnlineVotePage({
     hideRunningResult: event.hideRunningResult,
     voteConfirmation: event.voteConfirmation,
     anonymousVote: event.anonymousVote,
+    multipleCandidate: event.multipleCandidate || false,
+    maxVotes: event.maxVotes || 1,
     status: event.status,
   };
 
