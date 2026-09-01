@@ -34,6 +34,7 @@ import { createEventAction } from '../actions';
 
 interface CandidateInput {
   name: string;
+  photoUrl?: string;
   vision: string;
   mission: string;
 }
@@ -80,16 +81,27 @@ export default function NewEventWizardPage() {
   });
 
   const [candidates, setCandidates] = useState<CandidateInput[]>([
-    { name: 'Jane Doe', vision: 'Student empowerment', mission: 'Creating interactive clubs' },
-    { name: 'John Smith', vision: 'Tech campus', mission: 'Expansion of campus Wi-Fi' }
+    { name: 'Jane Doe', photoUrl: '', vision: 'Student empowerment', mission: 'Creating interactive clubs' },
+    { name: 'John Smith', photoUrl: '', vision: 'Tech campus', mission: 'Expansion of campus Wi-Fi' }
   ]);
 
-  const [newCand, setNewCand] = useState<CandidateInput>({ name: '', vision: '', mission: '' });
+  const [newCand, setNewCand] = useState<CandidateInput>({ name: '', photoUrl: '', vision: '', mission: '' });
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const b64 = evt.target?.result as string;
+      setNewCand(prev => ({ ...prev, photoUrl: b64 }));
+    };
+    reader.readAsDataURL(file);
+  };
 
   const addCandidate = () => {
     if (!newCand.name.trim()) return;
     setCandidates([...candidates, newCand]);
-    setNewCand({ name: '', vision: '', mission: '' });
+    setNewCand({ name: '', photoUrl: '', vision: '', mission: '' });
   };
 
   const removeCandidate = (idx: number) => {
@@ -455,16 +467,25 @@ export default function NewEventWizardPage() {
                 <div className="grid gap-3">
                   {candidates.map((cand, idx) => (
                     <div key={idx} className="flex items-center justify-between p-4 bg-background/50 border border-border-main rounded-xl">
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-brand-primary/10 text-brand-primary text-xs font-bold flex items-center justify-center">
-                            {idx + 1}
-                          </span>
-                          <span className="font-bold text-sm text-text-main">{cand.name}</span>
+                      <div className="flex items-center gap-3.5">
+                        {cand.photoUrl ? (
+                          <img src={cand.photoUrl} alt={cand.name} className="w-12 h-12 rounded-xl object-cover border border-brand-primary/30 shadow-xs" />
+                        ) : (
+                          <div className="w-12 h-12 rounded-xl bg-linear-to-br from-brand-primary/20 to-brand-secondary/20 text-brand-primary font-black text-sm flex items-center justify-center border border-border-main">
+                            #{idx + 1}
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="px-2 py-0.5 rounded-md bg-brand-primary/10 text-brand-primary text-[11px] font-bold">
+                              Paslon #{idx + 1}
+                            </span>
+                            <span className="font-bold text-sm text-text-main">{cand.name}</span>
+                          </div>
+                          <p className="text-xs text-text-muted mt-1 leading-normal">
+                            <strong>Visi:</strong> {cand.vision || '-'}
+                          </p>
                         </div>
-                        <p className="text-xs text-text-muted mt-1 leading-normal pl-8">
-                          <strong>Vision:</strong> {cand.vision}
-                        </p>
                       </div>
                       <Button variant="ghost" size="sm" onClick={() => removeCandidate(idx)} className="text-danger hover:bg-danger/5">
                         <Trash className="w-4.5 h-4.5" />
@@ -474,26 +495,51 @@ export default function NewEventWizardPage() {
                 </div>
 
                 {/* Candidate Add Form */}
-                <div className="p-4 bg-background/30 border border-dashed border-border-main rounded-xl space-y-3">
+                <div className="p-4.5 bg-background/30 border border-dashed border-border-main rounded-xl space-y-4">
+                  <span className="text-xs font-bold text-text-main block">Tambah Calon / Paslon Baru:</span>
+                  
                   <div className="grid sm:grid-cols-3 gap-3">
                     <Input
-                      placeholder="Candidate Name"
+                      placeholder="Nama Calon / Paslon"
                       value={newCand.name}
                       onChange={(e) => setNewCand({ ...newCand, name: e.target.value })}
                     />
                     <Input
-                      placeholder="Vision Statement"
+                      placeholder="Visi Calon"
                       value={newCand.vision}
                       onChange={(e) => setNewCand({ ...newCand, vision: e.target.value })}
                     />
                     <Input
-                      placeholder="Mission Summary"
+                      placeholder="Misi Calon"
                       value={newCand.mission}
                       onChange={(e) => setNewCand({ ...newCand, mission: e.target.value })}
                     />
                   </div>
+
+                  {/* Photo Upload & URL Inputs */}
+                  <div className="grid sm:grid-cols-2 gap-3 items-center bg-card/60 p-3 rounded-xl border border-border-main">
+                    <div className="flex items-center gap-3">
+                      {newCand.photoUrl ? (
+                        <img src={newCand.photoUrl} alt="Preview" className="w-10 h-10 rounded-lg object-cover border border-brand-primary" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-background border border-dashed border-border-main flex items-center justify-center text-text-muted text-[10px]">
+                          Foto
+                        </div>
+                      )}
+                      <label className="cursor-pointer bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-primary text-xs font-bold px-3 py-2 rounded-xl transition-colors">
+                        <span>Upload File Foto</span>
+                        <input type="file" accept="image/*" onChange={handlePhotoUpload} className="hidden" />
+                      </label>
+                    </div>
+                    <Input
+                      placeholder="Atau Paste URL Foto (https://...)"
+                      value={newCand.photoUrl || ''}
+                      onChange={(e) => setNewCand({ ...newCand, photoUrl: e.target.value })}
+                    />
+                  </div>
+
                   <Button type="button" variant="outline" size="sm" onClick={addCandidate} className="gap-1.5 h-10 w-full justify-center">
-                    <Plus className="w-4 h-4" /> Add Candidate
+                    <Plus className="w-4 h-4" /> Tambah Calon ke Daftar Roster
                   </Button>
                 </div>
               </div>
