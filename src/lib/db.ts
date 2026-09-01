@@ -10,9 +10,26 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 let prismaInstance: PrismaClient | null = null;
 
+// Normalize Supabase database URL (fix port 6543 to direct port 5432 if using db.* host)
+function getNormalizedDatabaseUrl(): string | undefined {
+  let url = process.env.DATABASE_URL;
+  if (!url) return undefined;
+  if (url.includes('supabase.co:6543')) {
+    url = url.replace(':6543', ':5432')
+      .replace('&pgbouncer=true', '')
+      .replace('?pgbouncer=true&', '?')
+      .replace('?pgbouncer=true', '');
+  }
+  return url;
+}
+
 try {
-  if (process.env.DATABASE_URL) {
+  const normalizedUrl = getNormalizedDatabaseUrl();
+  if (normalizedUrl) {
     prismaInstance = globalForPrisma.prisma || new PrismaClient({
+      datasources: {
+        db: { url: normalizedUrl }
+      },
       log: ['error'],
     });
     if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prismaInstance;
