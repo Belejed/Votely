@@ -68,6 +68,57 @@
 
 ---
 
+
+---
+
+## ⚙️ 6-Step Election Creation Wizard (Events Wizard)
+
+Votely provides a guided 6-step wizard that simplifies setting up complex elections in minutes:
+
+### 1. Step 1: Event Information (`INFO`)
+Set the election title (e.g. *Pemilihan OSIS / MPK 2026*), description, election statement, and layout details.
+
+![Step 1: Event Information](docs/images/wizard-step1-info.png)
+
+---
+
+### 2. Step 2: Choose Voting Mode (`MODE`)
+Choose the exact voting delivery channels that best suit your organization:
+- 🖥️ **Offline Booth (Recommended)**: Administrators set up central touchscreen/laptop kiosks. Voters scan their QR invitation card or enter PIN at the polling station.
+- 📱 **Online Client**: Voters access digital ballots remotely from their smartphones or laptops using secure OTP/passwords from home.
+- 🌐 **Hybrid Blend**: Enables both central physical kiosks and remote mobile ballots concurrently to maximize turnout.
+
+![Step 2: Choose Voting Mode](docs/images/wizard-step2-mode.png)
+
+---
+
+### 3. Step 3: Voter Authentication Method (`AUTH`)
+Determine how voters authenticate their identity before casting a ballot:
+- 🪪 **QR Code Scan (Recommended)**: Voter simply scans their printed QR card to the webcam. Fast, contactless, and zero typing required.
+- 🔒 **ID + Voting Pass**: Voter manually types their Student ID (NIS/NIK) plus their unique 6-digit PIN code.
+- 🛡️ **ID + QR Dual Auth**: High-security dual verification requiring both Student ID entry and QR card scanning.
+
+![Step 3: Voter Authentication Method](docs/images/wizard-step3-auth.png)
+
+---
+
+### 4. Step 4: Rules & Candidates (`RULES`)
+- Configure single or multi-candidate selection limits.
+- Toggle visibility of vision and mission statements on digital ballots.
+- Enable automatic vote confirmation popups and anonymized audit trails.
+
+---
+
+### 5. Step 5: Booth Setup (`BOOTH`)
+- Customize offline kiosk theme colors, institutional logos, and countdown timers.
+- Configure audio sound effects for confirmed votes.
+
+---
+
+### 6. Step 6: Review & Publish (`REVIEW`)
+- Comprehensive pre-flight checklist before publishing the election.
+- Instantly activates the election into the **Pemilihan Aktif** command center.
+
 ## 🛠️ Tech Stack
 
 - **Framework**: [Next.js 16 (Turbopack, App Router)](https://nextjs.org/)
