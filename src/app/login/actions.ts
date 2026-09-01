@@ -14,12 +14,12 @@ export async function loginAction(prevState: any, formData: FormData) {
   }
 
   try {
-    // 1. Find Organization (case-insensitive)
+    // 1. Find Organization (case-insensitive search across all orgs)
     const allOrgs = await db.organization.findMany({});
     const org = allOrgs.find((o: any) => o.slug && o.slug.toLowerCase().trim() === orgSlug);
 
     if (!org) {
-      return { error: 'Kode instansi / workspace tidak ditemukan. Silakan periksa kembali.' };
+      return { error: `Kode instansi "${orgSlug}" tidak ditemukan. Silakan periksa kembali.` };
     }
 
     // 2. Find User in this organization by username, name, or email prefix
@@ -36,13 +36,13 @@ export async function loginAction(prevState: any, formData: FormData) {
     });
 
     if (!user) {
-      return { error: 'Username panitia tidak terdaftar pada instansi ini.' };
+      return { error: `Username "${username}" tidak terdaftar pada instansi ${org.name}.` };
     }
 
     // 3. Verify Password
     const isMatch = await verifyPassword(password, user.passwordHash);
     if (!isMatch) {
-      return { error: 'Username atau password salah.' };
+      return { error: 'Password yang Anda masukkan salah.' };
     }
 
     // 4. Create Session
@@ -64,7 +64,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     };
   } catch (error: any) {
     console.error('Login action error:', error);
-    return { error: error.message || 'Terjadi kesalahan pada sistem. Silakan coba lagi.' };
+    return { error: error?.message || 'Terjadi kesalahan koneksi database. Silakan coba lagi.' };
   }
 }
 
