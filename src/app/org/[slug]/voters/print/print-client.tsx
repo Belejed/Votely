@@ -15,11 +15,8 @@ import {
   Clock,
   MapPin,
   ShieldCheck,
-  UserCheck,
-  Sparkles,
   Settings2,
-  ChevronRight,
-  Eye
+  Scissors
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -86,7 +83,7 @@ export default function PrintClientPage({
         for (const voter of voters) {
           urls[voter.qrToken] = await QRCode.toDataURL(voter.qrToken, {
             margin: 1,
-            width: 280,
+            width: 240,
             color: {
               dark: '#2D1B46',
               light: '#ffffff'
@@ -118,19 +115,21 @@ export default function PrintClientPage({
 
   return (
     <div className="min-h-screen bg-[#F8F5EF] text-[#2D1B46] p-0 m-0 print:bg-white print:p-0">
-      {/* CSS Print Stylesheet with Exact 1-Page per Sheet Metric Calibration */}
+      {/* CSS Print Stylesheet with Exact Metric Calibration to Prevent Page Overflows */}
       <style dangerouslySetInnerHTML={{
         __html: `
           @media print {
             @page {
               size: A4 portrait;
-              margin: 10mm 12mm 10mm 12mm;
+              margin: 8mm 10mm 8mm 10mm;
             }
             body {
               background: white !important;
               color: #2D1B46 !important;
               -webkit-print-color-adjust: exact !important;
               print-color-adjust: exact !important;
+              margin: 0 !important;
+              padding: 0 !important;
             }
             .no-print {
               display: none !important;
@@ -141,19 +140,66 @@ export default function PrintClientPage({
               max-width: 100% !important;
               background: white !important;
             }
-            .official-a4-letter {
-              break-inside: avoid !important;
+            
+            /* 1 Lembar Penuh A4 Strict Calibration */
+            .print-sheet-1 {
+              box-sizing: border-box !important;
+              height: 275mm !important;
+              max-height: 275mm !important;
               page-break-inside: avoid !important;
-              break-after: page !important;
+              break-inside: avoid !important;
               page-break-after: always !important;
+              break-after: page !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              padding: 4mm 6mm !important;
+              margin: 0 0 0 0 !important;
+              border: 2px solid #2D1B46 !important;
+              border-radius: 16px !important;
               box-shadow: none !important;
-              border-color: #2D1B46 !important;
-              height: 100% !important;
-              min-height: 270mm !important;
-              padding: 0 !important;
-              margin: 0 !important;
             }
-            .page-break {
+
+            /* 2 Kartu / A4 */
+            .print-sheet-2 {
+              box-sizing: border-box !important;
+              height: 133mm !important;
+              max-height: 133mm !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              padding: 3mm 4mm !important;
+              margin-bottom: 6mm !important;
+              border: 2px solid #2D1B46 !important;
+              border-radius: 12px !important;
+            }
+            .page-break-2 {
+              page-break-after: always !important;
+              break-after: page !important;
+            }
+
+            /* 4 Kartu / A4 */
+            .print-grid-4 {
+              display: grid !important;
+              grid-template-columns: 1fr 1fr !important;
+              gap: 4mm !important;
+            }
+            .print-card-4 {
+              box-sizing: border-box !important;
+              height: 133mm !important;
+              max-height: 133mm !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              padding: 3mm 4mm !important;
+              border: 2px solid #2D1B46 !important;
+              border-radius: 12px !important;
+            }
+            .page-break-4 {
               page-break-after: always !important;
               break-after: page !important;
             }
@@ -267,9 +313,9 @@ export default function PrintClientPage({
                 onChange={(e: any) => setLayout(e.target.value)}
                 className="w-full bg-white text-[#2D1B46] text-xs font-bold px-3 py-2 rounded-xl border border-[#EEE7DA] focus:outline-none focus:border-[#7C3AED] cursor-pointer shadow-xs"
               >
-                <option value="1">1 Lembar Penuh A4 (Standar)</option>
-                <option value="2">2 Surat / A4</option>
-                <option value="4">4 Kartu / A4</option>
+                <option value="1">1 Lembar Penuh A4 (Rekomendasi)</option>
+                <option value="2">2 Surat / A4 (Model C6)</option>
+                <option value="4">4 Kartu / A4 (Format Kompak)</option>
               </select>
             </div>
           </div>
@@ -283,50 +329,53 @@ export default function PrintClientPage({
         </div>
       </aside>
 
-      {/* PRINT CONTAINER WITH FULL A4 SHEETS */}
-      <div className="print-page-container p-4 sm:p-10 max-w-4xl mx-auto space-y-8 print:space-y-0">
+      {/* PRINT CONTAINER WITH EXACT COMPACT METRIC HEIGHT */}
+      <div className="print-page-container p-4 sm:p-8 max-w-4xl mx-auto space-y-8 print:space-y-0">
         {displayedVoters.length === 0 ? (
           <div className="py-24 text-center bg-white rounded-3xl border-2 border-dashed border-[#EEE7DA] p-8 space-y-3 shadow-sm">
             <p className="font-black text-base text-[#2D1B46]">Tidak ada surat pemilih pada filter kelas ini.</p>
             <p className="text-xs text-[#5E4E73]">Pilih opsi "Semua Kelas" pada panel pengaturan di sebelah kanan.</p>
           </div>
-        ) : (
-          displayedVoters.map((voter, index) => {
+        ) : layout === '1' ? (
+          /* ======================================================== */
+          /* FORMAT 1: 1 LEMBAR PENUH A4 PER PEMILIH (ZERO OVERFLOW)  */
+          /* ======================================================== */
+          displayedVoters.map((voter) => {
             const pinDigits = voter.votingPass.split('');
 
             return (
               <div
                 key={voter.id}
-                className="official-a4-letter bg-white text-[#2D1B46] rounded-3xl border-2 border-[#2D1B46] p-8 sm:p-12 shadow-xl print:shadow-none flex flex-col justify-between"
+                className="print-sheet-1 bg-white text-[#2D1B46] rounded-3xl border-2 border-[#2D1B46] p-6 sm:p-8 shadow-xl print:shadow-none flex flex-col justify-between"
               >
                 <div>
-                  {/* 1. KOP SURAT RESMI DENGAN TEMA VOTELY */}
-                  <div className="border-b-4 border-double border-[#2D1B46] pb-5 mb-6">
-                    <div className="flex items-center justify-between gap-6">
+                  {/* 1. KOP SURAT RESMI */}
+                  <div className="border-b-4 border-double border-[#2D1B46] pb-3 mb-3.5">
+                    <div className="flex items-center justify-between gap-4">
                       {/* Logo Instansi di Kiri */}
                       {logoUrl ? (
-                        <div className="w-20 h-20 rounded-2xl bg-white border-2 border-[#EEE7DA] p-2 flex items-center justify-center shrink-0 shadow-xs">
+                        <div className="w-16 h-16 rounded-2xl bg-white border-2 border-[#EEE7DA] p-1.5 flex items-center justify-center shrink-0 shadow-xs">
                           <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
                         </div>
                       ) : (
-                        <div className="w-18 h-18 rounded-2xl bg-red-50 border-2 border-red-200 text-red-600 flex items-center justify-center font-black text-lg shrink-0 shadow-xs">
-                          <Vote className="w-10 h-10" />
+                        <div className="w-14 h-14 rounded-2xl bg-red-50 border-2 border-red-200 text-red-600 flex items-center justify-center font-black text-base shrink-0 shadow-xs">
+                          <Vote className="w-8 h-8" />
                         </div>
                       )}
 
                       {/* Header Teks di Sebelah Kanan Logo (Aligned Right & Clean) */}
                       <div className="flex-1 text-right space-y-0.5">
-                        <h4 className="font-extrabold text-xs uppercase tracking-wider text-[#5E4E73]">
+                        <h4 className="font-extrabold text-[11px] uppercase tracking-wider text-[#5E4E73]">
                           PANITIA PEMILIHAN KETUA & WAKIL KETUA OSIS / SUARA MAHASISWA
                         </h4>
-                        <h1 className="font-black text-2xl sm:text-3xl text-[#2D1B46] uppercase tracking-tight leading-tight">
+                        <h1 className="font-black text-xl sm:text-2xl text-[#2D1B46] uppercase tracking-tight leading-tight">
                           {orgName}
                         </h1>
                         <div className="flex items-center justify-end gap-2 pt-0.5">
-                          <span className="bg-red-50 text-red-600 text-[11px] font-black px-2.5 py-0.5 rounded-full uppercase tracking-wider border border-red-200">
+                          <span className="bg-red-50 text-red-600 text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider border border-red-200">
                             KARTU TANDA PEMILIH RESMI (DPT)
                           </span>
-                          <span className="text-xs font-black text-[#2D1B46]">
+                          <span className="text-[11px] font-black text-[#2D1B46]">
                             • {eventName.toUpperCase()}
                           </span>
                         </div>
@@ -334,77 +383,74 @@ export default function PrintClientPage({
                     </div>
                   </div>
 
-                  {/* 2. HERO CARD DATA PEMILIH (FULL-WIDTH, MEMBENTANG KE KANAN) */}
-                  <div className="bg-[#F8F5EF] border-2 border-[#2D1B46] rounded-2xl p-5 sm:p-6 mb-6 shadow-xs">
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                      
-                      {/* Left Side: Large Voter Name & Badges */}
-                      <div className="space-y-1 flex-1 min-w-0">
-                        <span className="text-[10px] font-black uppercase tracking-widest text-[#7C3AED] block">
+                  {/* 2. HERO CARD DATA PEMILIH */}
+                  <div className="bg-[#F8F5EF] border-2 border-[#2D1B46] rounded-2xl p-3.5 sm:p-4 mb-3 shadow-xs">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                      <div className="space-y-0.5 flex-1 min-w-0">
+                        <span className="text-[9px] font-black uppercase tracking-widest text-[#7C3AED] block">
                           NAMA LENGKAP PEMILIH TETAP
                         </span>
-                        <h2 className="text-2xl sm:text-3xl font-black text-[#2D1B46] uppercase tracking-tight truncate leading-none">
+                        <h2 className="text-xl sm:text-2xl font-black text-[#2D1B46] uppercase tracking-tight truncate leading-tight">
                           {voter.name}
                         </h2>
 
-                        <div className="flex items-center gap-3 pt-2.5">
-                          <div className="bg-white border border-[#EEE7DA] px-3.5 py-1 rounded-xl text-xs font-black text-[#2D1B46] shadow-xs">
+                        <div className="flex items-center gap-2 pt-1">
+                          <div className="bg-white border border-[#EEE7DA] px-2.5 py-0.5 rounded-lg text-[11px] font-black text-[#2D1B46] shadow-xs">
                             Kelas: <strong className="text-[#7C3AED]">{voter.class || '—'}</strong>
                           </div>
-                          <div className="bg-white border border-[#EEE7DA] px-3.5 py-1 rounded-xl text-xs font-mono font-bold text-[#5E4E73] shadow-xs">
+                          <div className="bg-white border border-[#EEE7DA] px-2.5 py-0.5 rounded-lg text-[11px] font-mono font-bold text-[#5E4E73] shadow-xs">
                             NIS / ID: <strong>{voter.studentId || '—'}</strong>
                           </div>
                         </div>
                       </div>
 
-                      {/* Right Side: Large Invitation Badge */}
-                      <div className="text-center sm:text-right shrink-0 bg-white border-2 border-[#2D1B46] rounded-2xl p-3.5 shadow-xs">
-                        <span className="text-[9px] uppercase font-black tracking-widest text-[#5E4E73] block">
+                      {/* Right Side: Invitation Badge */}
+                      <div className="text-center sm:text-right shrink-0 bg-white border-2 border-[#2D1B46] rounded-xl p-2.5 shadow-xs">
+                        <span className="text-[8px] uppercase font-black tracking-widest text-[#5E4E73] block">
                           NO. UNDANGAN DPT
                         </span>
-                        <span className="font-mono font-black text-base sm:text-lg text-[#2D1B46] tracking-wider block mt-0.5">
+                        <span className="font-mono font-black text-sm sm:text-base text-[#2D1B46] tracking-wider block mt-0.5">
                           {voter.invitationNum}
                         </span>
                       </div>
-
                     </div>
                   </div>
 
                   {/* 3. TABEL JADWAL & LOKASI PEMUNGUTAN SUARA */}
-                  <div className="bg-[#F8F5EF] border-2 border-[#EEE7DA] rounded-2xl p-5 mb-6 text-xs sm:text-sm shadow-xs">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2.5">
-                        <div className="flex items-start gap-2.5">
-                          <Calendar className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
+                  <div className="bg-[#F8F5EF] border-2 border-[#EEE7DA] rounded-2xl p-3.5 mb-3 text-xs shadow-xs">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <Calendar className="w-3.5 h-3.5 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[#5E4E73] font-bold block text-[11px]">Hari / Tanggal Pelaksanaan</span>
-                            <span className="font-black text-[#2D1B46] text-sm">{customDate}</span>
+                            <span className="text-[#5E4E73] font-bold block text-[10px]">Hari / Tanggal Pelaksanaan</span>
+                            <span className="font-black text-[#2D1B46] text-xs">{customDate}</span>
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-2.5">
-                          <Clock className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-2">
+                          <Clock className="w-3.5 h-3.5 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[#5E4E73] font-bold block text-[11px]">Waktu Pemungutan Suara</span>
-                            <span className="font-black text-[#2D1B46] text-sm">{customTime}</span>
+                            <span className="text-[#5E4E73] font-bold block text-[10px]">Waktu Pemungutan Suara</span>
+                            <span className="font-black text-[#2D1B46] text-xs">{customTime}</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="space-y-2.5">
-                        <div className="flex items-start gap-2.5">
-                          <MapPin className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
+                      <div className="space-y-2">
+                        <div className="flex items-start gap-2">
+                          <MapPin className="w-3.5 h-3.5 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[#5E4E73] font-bold block text-[11px]">Tempat / Lokasi TPS</span>
-                            <span className="font-black text-[#2D1B46] text-sm">Bilik Suara E-Voting Kiosk ({orgName})</span>
+                            <span className="text-[#5E4E73] font-bold block text-[10px]">Tempat / Lokasi TPS</span>
+                            <span className="font-black text-[#2D1B46] text-xs">Bilik Suara E-Voting Kiosk ({orgName})</span>
                           </div>
                         </div>
 
-                        <div className="flex items-start gap-2.5">
-                          <ShieldCheck className="w-4 h-4 text-[#7C3AED] shrink-0 mt-0.5" />
+                        <div className="flex items-start gap-2">
+                          <ShieldCheck className="w-3.5 h-3.5 text-[#7C3AED] shrink-0 mt-0.5" />
                           <div>
-                            <span className="text-[#5E4E73] font-bold block text-[11px]">Status Hak Pilih</span>
-                            <span className="font-black text-emerald-600 text-sm">Terverifikasi & Aktif (1 Hak Suara Sah)</span>
+                            <span className="text-[#5E4E73] font-bold block text-[10px]">Status Hak Pilih</span>
+                            <span className="font-black text-emerald-600 text-xs">Terverifikasi & Aktif (1 Hak Suara Sah)</span>
                           </div>
                         </div>
                       </div>
@@ -412,52 +458,52 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 4. KOTAK KREDENSIAL AKSES BILIK SUARA (DIGITAL BALLOT PASS) */}
-                  <div className="border-2 border-[#2D1B46] rounded-2xl p-6 bg-white mb-6 shadow-sm">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-6">
-                      {/* Left: Large Segmented PIN */}
-                      <div className="space-y-3 flex-1 text-center sm:text-left">
-                        <div className="space-y-1">
-                          <span className="text-[11px] font-black uppercase tracking-wider text-[#7C3AED] block">
+                  <div className="border-2 border-[#2D1B46] rounded-2xl p-4 mb-3 bg-white shadow-xs">
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      {/* Left: Segmented PIN */}
+                      <div className="space-y-2 flex-1 text-center sm:text-left">
+                        <div className="space-y-0.5">
+                          <span className="text-[10px] font-black uppercase tracking-wider text-[#7C3AED] block">
                             KREDENSIAL AKSES BILIK SUARA (DIGITAL PASS)
                           </span>
-                          <h4 className="font-black text-base text-[#2D1B46]">
+                          <h4 className="font-black text-sm text-[#2D1B46]">
                             KODE PIN RAHASIA PEMILIH (6-DIGIT):
                           </h4>
                         </div>
 
-                        {/* Large Segmented PIN Boxes */}
-                        <div className="flex items-center justify-center sm:justify-start gap-2 pt-1">
+                        {/* Segmented PIN Boxes */}
+                        <div className="flex items-center justify-center sm:justify-start gap-1.5 pt-0.5">
                           {pinDigits.map((digit, dIdx) => (
                             <span 
                               key={dIdx}
-                              className="w-10 h-12 sm:w-11 sm:h-13 rounded-xl bg-[#F8F5EF] border-2 border-[#2D1B46] text-[#2D1B46] font-mono font-black text-xl flex items-center justify-center shadow-xs"
+                              className="w-8 h-10 sm:w-9 sm:h-11 rounded-lg bg-[#F8F5EF] border-2 border-[#2D1B46] text-[#2D1B46] font-mono font-black text-lg flex items-center justify-center shadow-2xs"
                             >
                               {digit}
                             </span>
                           ))}
                         </div>
 
-                        <p className="text-[11px] text-[#5E4E73] italic pt-1 leading-relaxed">
+                        <p className="text-[10px] text-[#5E4E73] italic pt-0.5 leading-tight">
                           * Jaga kerahasiaan PIN ini. Jangan berikan kepada siapa pun demi keaslian suara Anda.
                         </p>
                       </div>
 
-                      {/* Right: Big Crisp QR Code with bottom padding */}
-                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-[#EEE7DA] pl-0 sm:pl-6 pb-2">
+                      {/* Right: Crisp QR Code */}
+                      <div className="flex flex-col items-center justify-center shrink-0 border-l-0 sm:border-l-2 border-[#EEE7DA] pl-0 sm:pl-4">
                         {qrUrls[voter.qrToken] ? (
-                          <div className="p-2 bg-white border-2 border-[#2D1B46] rounded-2xl shadow-sm">
+                          <div className="p-1.5 bg-white border-2 border-[#2D1B46] rounded-xl shadow-2xs">
                             <img 
                               src={qrUrls[voter.qrToken]} 
                               alt="QR Token" 
-                              className="w-32 h-32 sm:w-36 sm:h-36 object-contain rounded-lg" 
+                              className="w-24 h-24 sm:w-26 sm:h-26 object-contain rounded-md" 
                             />
                           </div>
                         ) : (
-                          <div className="w-36 h-36 bg-[#F8F5EF] rounded-2xl border-2 border-dashed border-[#EEE7DA] flex items-center justify-center">
-                            <QrCode className="w-10 h-10 text-[#5E4E73]" />
+                          <div className="w-24 h-24 bg-[#F8F5EF] rounded-xl border-2 border-dashed border-[#EEE7DA] flex items-center justify-center">
+                            <QrCode className="w-8 h-8 text-[#5E4E73]" />
                           </div>
                         )}
-                        <span className="text-[9px] font-mono font-black uppercase tracking-widest text-[#2D1B46] mt-2 block">
+                        <span className="text-[8px] font-mono font-black uppercase tracking-widest text-[#2D1B46] mt-1 block">
                           SCAN TOKEN DI BILIK
                         </span>
                       </div>
@@ -465,9 +511,9 @@ export default function PrintClientPage({
                   </div>
 
                   {/* 5. PETUNJUK COBLOS DI BILIK SUARA */}
-                  <div className="text-xs text-[#2D1B46] bg-[#F8F5EF] border border-[#EEE7DA] rounded-xl p-4 mb-6 space-y-1.5">
-                    <strong className="text-[#2D1B46] block font-bold text-xs">PETUNJUK PENGGUNAAN DI BILIK SUARA:</strong>
-                    <ol className="list-decimal pl-5 space-y-1 leading-relaxed text-[11px] text-[#5E4E73]">
+                  <div className="text-[11px] text-[#2D1B46] bg-[#F8F5EF] border border-[#EEE7DA] rounded-xl p-3 mb-2 space-y-1">
+                    <strong className="text-[#2D1B46] block font-bold text-[11px]">PETUNJUK PENGGUNAAN DI BILIK SUARA:</strong>
+                    <ol className="list-decimal pl-4 space-y-0.5 leading-snug text-[10px] text-[#5E4E73]">
                       <li>Bawa lembar ini ke lokasi <strong>Bilik Suara Kiosk (TPS)</strong> yang telah disediakan panitia.</li>
                       <li>Arahkan <strong>QR Code</strong> di atas ke kamera pemindai bilik, atau ketik <strong>PIN 6-Digit</strong> Anda pada layar sentuh.</li>
                       <li>Cermati foto dan visi-misi calon, lalu klik tombol <strong>Coblos</strong> pada Pasangan Calon pilihan Anda.</li>
@@ -476,9 +522,9 @@ export default function PrintClientPage({
                   </div>
                 </div>
 
-                {/* 6. CLEAN BOTTOM SECURITY WATERMARK */}
-                <div className="pt-6 border-t-2 border-[#EEE7DA] flex items-center justify-between text-xs text-[#5E4E73] font-medium">
-                  <div className="flex items-center gap-2">
+                {/* 6. SECURITY FOOTER */}
+                <div className="pt-2 border-t-2 border-[#EEE7DA] flex items-center justify-between text-[10px] text-[#5E4E73] font-medium">
+                  <div className="flex items-center gap-1.5">
                     <span className="w-2 h-2 rounded-full bg-emerald-500" />
                     <span>Dokumen Resmi Panitia Pemilihan • Sah & Terenkripsi</span>
                   </div>
@@ -490,6 +536,82 @@ export default function PrintClientPage({
               </div>
             );
           })
+        ) : (
+          /* ======================================================== */
+          /* FORMAT 2 & 4: MULTI-CARD PER A4 SHEET                    */
+          /* ======================================================== */
+          <div className={layout === '4' ? 'print-grid-4' : 'space-y-4'}>
+            {displayedVoters.map((voter, index) => {
+              const pinDigits = voter.votingPass.split('');
+              const cardsPerPage = parseInt(layout, 10);
+              const isPageBreak = (index + 1) % cardsPerPage === 0 && index !== displayedVoters.length - 1;
+
+              return (
+                <React.Fragment key={voter.id}>
+                  <div className={layout === '4' ? 'print-card-4 bg-white text-[#2D1B46] rounded-2xl border-2 border-[#2D1B46] p-3 flex flex-col justify-between' : 'print-sheet-2 bg-white text-[#2D1B46] rounded-2xl border-2 border-[#2D1B46] p-4 flex flex-col justify-between'}>
+                    {/* Header */}
+                    <div className="border-b-2 border-[#2D1B46] pb-2 mb-2 flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-2">
+                        {logoUrl ? (
+                          <div className="w-8 h-8 rounded-lg bg-white border border-[#EEE7DA] p-1 flex items-center justify-center shrink-0">
+                            <img src={logoUrl} alt="Logo" className="w-full h-full object-contain" />
+                          </div>
+                        ) : (
+                          <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center font-black text-xs shrink-0">
+                            <Vote className="w-4 h-4" />
+                          </div>
+                        )}
+                        <div>
+                          <span className="font-black text-xs uppercase tracking-tight block leading-tight">{orgName}</span>
+                          <span className="text-[9px] text-[#7C3AED] font-bold uppercase block">{eventName}</span>
+                        </div>
+                      </div>
+
+                      <span className="font-mono font-black text-[10px] bg-[#2D1B46] text-white px-2 py-0.5 rounded">
+                        {voter.invitationNum}
+                      </span>
+                    </div>
+
+                    {/* Voter Name & Badges */}
+                    <div className="my-1 space-y-0.5">
+                      <span className="text-[8px] uppercase font-black text-[#7C3AED] block">Nama Pemilih:</span>
+                      <h3 className="text-sm font-black uppercase text-[#2D1B46] truncate leading-tight">{voter.name}</h3>
+                      <div className="flex items-center gap-2 pt-0.5 text-[10px]">
+                        <span className="bg-[#F8F5EF] px-2 py-0.5 rounded border border-[#EEE7DA] font-bold">Kelas: {voter.class || '—'}</span>
+                        <span className="bg-[#F8F5EF] px-2 py-0.5 rounded border border-[#EEE7DA] font-mono">NIS: {voter.studentId || '—'}</span>
+                      </div>
+                    </div>
+
+                    {/* PIN & QR Code */}
+                    <div className="bg-[#F8F5EF] border border-[#EEE7DA] rounded-xl p-2 my-1 flex items-center justify-between gap-2">
+                      <div>
+                        <span className="text-[8px] font-black uppercase text-[#7C3AED] block mb-1">PIN COBLOS:</span>
+                        <div className="flex items-center gap-1">
+                          {pinDigits.map((d, i) => (
+                            <span key={i} className="w-5 h-6 rounded bg-white border border-[#2D1B46] text-[#2D1B46] font-mono font-black text-xs flex items-center justify-center">
+                              {d}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {qrUrls[voter.qrToken] && (
+                        <img src={qrUrls[voter.qrToken]} alt="QR" className="w-14 h-14 object-contain rounded border border-[#2D1B46] p-0.5 bg-white shrink-0" />
+                      )}
+                    </div>
+
+                    {/* Footer */}
+                    <div className="border-t border-[#EEE7DA] pt-1.5 mt-1 flex items-center justify-between text-[8px] text-[#5E4E73]">
+                      <span>Bawa kartu ini ke bilik suara</span>
+                      <span className="font-mono font-bold">VOTELY</span>
+                    </div>
+                  </div>
+
+                  {isPageBreak && <div className={layout === '4' ? 'page-break-4' : 'page-break-2'} />}
+                </React.Fragment>
+              );
+            })}
+          </div>
         )}
       </div>
     </div>
