@@ -26,6 +26,10 @@ export default async function ThemePage({
     plan: org.plan,
     primaryColor: org.primaryColor,
     secondaryColor: org.secondaryColor,
+    posterUrl: org.posterUrl || null,
+    posterEnabled: org.posterEnabled || false,
+    posterTitle: org.posterTitle || 'Panduan & Tata Cara Pemilihan',
+    posterCaption: org.posterCaption || 'Silakan cermati tata cara dan informasi pemilihan sebelum melanjutkan ke pengisian surat suara.',
   };
 
   return (

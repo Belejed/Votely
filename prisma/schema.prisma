@@ -53,6 +53,10 @@ model Organization {
   primaryColor   String         @default("#7C3AED") @map("primary_color")
   secondaryColor String         @default("#A78BFA") @map("secondary_color")
   customDomain   String?        @unique @map("custom_domain")
+  posterUrl      String?        @map("poster_url")
+  posterEnabled  Boolean        @default(false) @map("poster_enabled")
+  posterTitle    String?        @default("Panduan & Tata Cara Pemilihan") @map("poster_title")
+  posterCaption  String?        @default("Silakan cermati tata cara dan informasi pemilihan sebelum melanjutkan ke pengisian surat suara.") @map("poster_caption")
   createdAt      DateTime       @default(now()) @map("created_at")
   updatedAt      DateTime       @updatedAt @map("updated_at")
 

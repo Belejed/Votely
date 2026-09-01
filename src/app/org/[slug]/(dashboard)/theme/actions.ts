@@ -8,7 +8,11 @@ export async function saveThemeAction(
   slug: string,
   primaryColor: string,
   secondaryColor: string,
-  name: string
+  name: string,
+  posterUrl?: string | null,
+  posterEnabled?: boolean,
+  posterTitle?: string,
+  posterCaption?: string
 ) {
   const session = await getAdminSession();
   if (!session) {
@@ -29,8 +33,6 @@ export async function saveThemeAction(
     return { error: 'Tenant boundary violation.' };
   }
 
-
-
   try {
     await db.organization.update({
       where: { id: org.id },
@@ -38,25 +40,34 @@ export async function saveThemeAction(
         name,
         primaryColor,
         secondaryColor,
+        posterUrl: posterUrl ?? null,
+        posterEnabled: posterEnabled ?? false,
+        posterTitle: posterTitle ?? 'Panduan & Tata Cara Pemilihan',
+        posterCaption: posterCaption ?? 'Silakan cermati informasi dan tata cara pemilihan sebelum melanjutkan pengisian surat suara.',
       }
     });
 
     // Log the change
-    await db.auditLog.create({
-      data: {
-        organizationId: org.id,
-        userId: session.userId,
-        action: 'THEME_UPDATE',
-        details: `Updated workspace branding. Primary: ${primaryColor}, Secondary: ${secondaryColor}`,
-      }
-    });
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: org.id,
+          userId: session.userId,
+          action: 'THEME_UPDATE',
+          details: `Memperbarui tema & poster splash screen workspace. Poster Enabled: ${posterEnabled ? 'Ya' : 'Tidak'}`,
+        }
+      });
+    } catch (auditErr) {
+      console.warn('Audit log failed:', auditErr);
+    }
 
     revalidatePath(`/org/${slug}/dashboard`);
     revalidatePath(`/org/${slug}/theme`);
+    revalidatePath(`/org/${slug}/active-election`);
 
     return { success: true };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Update branding error:', error);
-    return { error: 'Failed to save branding preferences.' };
+    return { error: error?.message || 'Gagal menyimpan pengaturan tema dan poster.' };
   }
 }

@@ -59,12 +59,20 @@ export default async function OnlineVotePage({
     socialMedia: c.socialMedia,
   }));
 
+  const posterConfig = {
+    url: org.posterUrl || null,
+    enabled: org.posterEnabled || false,
+    title: org.posterTitle || 'Panduan & Tata Cara Pemilihan',
+    caption: org.posterCaption || 'Silakan cermati tata cara dan informasi pemilihan sebelum melanjutkan ke pengisian surat suara.',
+  };
+
   return (
     <VoteClientPage 
       event={serializedEvent} 
       candidates={serializedCandidates} 
       slug={slug} 
       orgName={org.name}
+      poster={posterConfig}
     />
   );
 }

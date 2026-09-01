@@ -127,6 +127,13 @@ export default async function BoothPage({
     cameraScan: true,
   };
 
+  const posterConfig = {
+    url: org.posterUrl || null,
+    enabled: org.posterEnabled || false,
+    title: org.posterTitle || 'Panduan & Tata Cara Pemilihan',
+    caption: org.posterCaption || 'Silakan cermati tata cara dan informasi pemilihan sebelum melanjutkan ke pengisian surat suara.',
+  };
+
   return (
     <BoothClientPage 
       event={serializedEvent} 
@@ -135,6 +142,7 @@ export default async function BoothPage({
       slug={slug} 
       orgName={org.name}
       voters={serializedVoters}
+      poster={posterConfig}
     />
   );
 }

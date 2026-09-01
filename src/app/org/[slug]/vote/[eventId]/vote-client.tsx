@@ -46,11 +46,17 @@ interface VoteClientProps {
   candidates: CandidateProps[];
   slug: string;
   orgName: string;
+  poster?: {
+    url: string | null;
+    enabled: boolean;
+    title: string;
+    caption: string;
+  };
 }
 
 type VoteState = 'LOGIN' | 'CANDIDATES' | 'CONFIRMATION' | 'SUCCESS';
 
-export default function VoteClientPage({ event, candidates, slug, orgName }: VoteClientProps) {
+export default function VoteClientPage({ event, candidates, slug, orgName, poster }: VoteClientProps) {
   const [voteState, setVoteState] = useState<VoteState>('LOGIN');
   const [isPending, startTransition] = useTransition();
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -77,7 +83,11 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
         setErrorMsg(res.error);
       } else if (res?.success && res.voter) {
         setActiveVoter(res.voter);
-        setVoteState('CANDIDATES');
+        if (poster?.enabled && poster?.url) {
+          setVoteState('POSTER' as any);
+        } else {
+          setVoteState('CANDIDATES');
+        }
       }
     });
   };
@@ -233,6 +243,42 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
                   <Lock className="w-3.5 h-3.5 text-brand-primary shrink-0" />
                   <span>Your ballot is encrypted and submitted anonymously according to privacy protocols.</span>
                 </div>
+              </Card>
+            </motion.div>
+          )}
+
+                    {/* POSTER SPLASH SCREEN */}
+          {(voteState as any) === 'POSTER' && activeVoter && poster?.url && (
+            <motion.div
+              key="poster-splash"
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              className="w-full max-w-xl mx-auto"
+            >
+              <Card className="p-6 bg-card border-2 border-brand-primary/40 rounded-3xl shadow-2xl space-y-6 text-center">
+                <div className="flex items-center justify-between pb-3 border-b border-border-main text-left">
+                  <div>
+                    <Badge variant="info">PANDUAN PEMILIHAN</Badge>
+                    <span className="text-xs text-text-muted block mt-0.5">Pemilih: <strong>{activeVoter.name}</strong></span>
+                  </div>
+                </div>
+
+                <div className="w-full aspect-[4/3] max-h-[340px] rounded-2xl overflow-hidden border-2 border-border-main bg-black shadow-lg">
+                  <img src={poster.url} alt="Poster" className="w-full h-full object-contain" />
+                </div>
+
+                <div className="space-y-1 text-center">
+                  <h4 className="text-lg font-black text-text-main">{poster.title}</h4>
+                  <p className="text-xs text-text-muted leading-relaxed">{poster.caption}</p>
+                </div>
+
+                <Button 
+                  onClick={() => setVoteState('CANDIDATES')} 
+                  className="w-full button-gradient font-black text-sm h-12 rounded-2xl shadow-lg shadow-brand-primary/25"
+                >
+                  Saya Mengerti, Masuk ke Surat Suara ➔
+                </Button>
               </Card>
             </motion.div>
           )}

@@ -72,11 +72,17 @@ interface BoothClientProps {
   };
   slug: string;
   orgName: string;
+  poster?: {
+    url: string | null;
+    enabled: boolean;
+    title: string;
+    caption: string;
+  };
 }
 
 type BoothState = 'SCANNER' | 'CANDIDATES' | 'CONFIRMATION' | 'SUCCESS';
 
-export default function BoothClientPage({ event, candidates, settings, slug, orgName, voters = [] }: BoothClientProps) {
+export default function BoothClientPage({ event, candidates, settings, slug, orgName, voters = [], poster }: BoothClientProps) {
   const [boothState, setBoothState] = useState<BoothState>('SCANNER');
   const [isPending, setIsPending] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -268,7 +274,11 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
           }
         } else if (res?.success && res.voter) {
           setActiveVoter(res.voter);
-          setBoothState('CANDIDATES');
+          if (poster?.enabled && poster?.url) {
+            setBoothState('POSTER' as any);
+          } else {
+            setBoothState('CANDIDATES');
+          }
         }
       } catch (err) {
         console.error("Votely Scanner: Authentication error:", err);
@@ -541,6 +551,46 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                   </Card>
                 </div>
               )}
+            </motion.div>
+          )}
+
+                    {/* STATE: WELCOME POSTER SPLASH SCREEN */}
+          {(boothState as any) === 'POSTER' && activeVoter && poster?.url && (
+            <motion.div
+              key="poster-splash"
+              initial={{ opacity: 0, scale: 0.97 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.97 }}
+              className="w-full max-w-2xl mx-auto"
+            >
+              <Card className="p-6 sm:p-8 bg-card border-2 border-brand-primary/40 rounded-3xl shadow-2xl space-y-6 text-center">
+                <div className="flex items-center justify-between pb-3 border-b border-border-main text-left">
+                  <div>
+                    <Badge variant="info" className="px-2.5 py-0.5 text-[10px] font-black uppercase tracking-wider">
+                      INFORMASI PEMILIHAN
+                    </Badge>
+                    <span className="text-xs text-text-muted block mt-0.5 font-bold">Pemilih: <strong className="text-text-main">{activeVoter.name}</strong></span>
+                  </div>
+                </div>
+
+                {/* Poster Frame */}
+                <div className="w-full aspect-[4/3] max-h-[380px] rounded-2xl overflow-hidden border-2 border-border-main bg-black shadow-lg relative">
+                  <img src={poster.url} alt="Poster" className="w-full h-full object-contain" />
+                </div>
+
+                <div className="space-y-1.5 text-center">
+                  <h3 className="text-xl sm:text-2xl font-display font-black text-text-main">{poster.title}</h3>
+                  <p className="text-xs sm:text-sm text-text-muted max-w-lg mx-auto leading-relaxed">{poster.caption}</p>
+                </div>
+
+                <Button 
+                  onClick={() => setBoothState('CANDIDATES')} 
+                  className="w-full button-gradient font-black text-sm h-12 rounded-2xl shadow-lg shadow-brand-primary/25 gap-2"
+                >
+                  <span>Saya Mengerti, Buka Surat Suara</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Button>
+              </Card>
             </motion.div>
           )}
 
