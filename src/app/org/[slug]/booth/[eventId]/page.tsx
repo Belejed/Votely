@@ -85,6 +85,7 @@ export default async function BoothPage({
     hideRunningResult: event.hideRunningResult,
     voteConfirmation: event.voteConfirmation,
     anonymousVote: event.anonymousVote,
+    status: event.status,
   };
 
   const serializedCandidates = (event.candidates || []).map((c: any) => ({

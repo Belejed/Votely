@@ -46,6 +46,7 @@ export default async function OnlineVotePage({
     hideRunningResult: event.hideRunningResult,
     voteConfirmation: event.voteConfirmation,
     anonymousVote: event.anonymousVote,
+    status: event.status,
   };
 
   const serializedCandidates = (event.candidates || []).map((c: any) => ({

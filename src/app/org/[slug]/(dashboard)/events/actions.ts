@@ -80,7 +80,7 @@ export async function createEventAction(slug: string, wizardData: any) {
         multipleCandidate: multipleCandidate ?? false,
         maxVotes: parseInt(maxVotes) || 1,
         autoClose: autoClose ?? false,
-        status: 'PUBLISHED', // Auto-publish for instant testing
+        status: wizardData.status || 'PUBLISHED', // Respect draft or live for instant testing
       },
     });
 
@@ -208,5 +208,93 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
     return { success: true };
   } catch (error: any) {
     return { error: error?.message || 'Failed to update candidate photo.' };
+  }
+}
+
+export async function startEventAction(eventId: string, orgId: string, slug: string) {
+  const session = await getAdminSession();
+  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+    return { error: 'Unauthorized.' };
+  }
+
+  try {
+    // Archive other published events
+    await db.event.updateMany({
+      where: { organizationId: orgId, status: 'PUBLISHED' },
+      data: { status: 'ARCHIVED' },
+    });
+
+    // Start this event
+    await db.event.update({
+      where: { id: eventId },
+      data: {
+        status: 'PUBLISHED',
+        startDate: new Date(),
+        endDate: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      },
+    });
+
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: orgId,
+          userId: session.userId,
+          action: 'EVENT_START',
+          details: `Panitia memulai pemungutan suara serentak untuk pemilihan ID ${eventId}`,
+        },
+      });
+    } catch (auditErr) {
+      console.warn('Audit log failed:', auditErr);
+    }
+
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/dashboard`);
+    revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/livecount`);
+    revalidatePath(`/org/${slug}/booth/${eventId}`);
+    revalidatePath(`/org/${slug}/vote/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.message || 'Failed to start election.' };
+  }
+}
+
+export async function closeEventAction(eventId: string, orgId: string, slug: string) {
+  const session = await getAdminSession();
+  if (!session || (session.role !== 'SUPER_ADMIN' && session.organizationId !== orgId)) {
+    return { error: 'Unauthorized.' };
+  }
+
+  try {
+    await db.event.update({
+      where: { id: eventId },
+      data: {
+        status: 'CLOSED',
+        endDate: new Date(),
+      },
+    });
+
+    try {
+      await db.auditLog.create({
+        data: {
+          organizationId: orgId,
+          userId: session.userId,
+          action: 'EVENT_CLOSE',
+          details: `Panitia resmi menutup pemungutan suara untuk pemilihan ID ${eventId}`,
+        },
+      });
+    } catch (auditErr) {
+      console.warn('Audit log failed:', auditErr);
+    }
+
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/dashboard`);
+    revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/livecount`);
+    revalidatePath(`/org/${slug}/booth/${eventId}`);
+    revalidatePath(`/org/${slug}/vote/${eventId}`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.message || 'Failed to close election.' };
   }
 }

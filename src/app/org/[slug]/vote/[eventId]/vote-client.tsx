@@ -1,12 +1,15 @@
 'use client';
 
+import Link from 'next/link';
+
 import React, { useState, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
+  Clock,
   Vote, 
   Lock, 
   CheckCircle2, 
@@ -38,6 +41,7 @@ interface VoteClientProps {
     hideRunningResult: boolean;
     voteConfirmation: boolean;
     anonymousVote: boolean;
+    status: string;
   };
   candidates: CandidateProps[];
   slug: string;
@@ -138,7 +142,44 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
       </header>
 
       {/* Main Body */}
-      <main className="flex-1 flex items-center justify-center p-6">
+      {/* MAIN CLOSED / WAITING SCREEN GUARDS */}
+      {event.status === 'CLOSED' || event.status === 'ARCHIVED' ? (
+        <main className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md w-full p-8 text-center bg-card border-2 border-danger/30 shadow-2xl space-y-6 rounded-3xl">
+            <div className="w-18 h-18 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto border border-danger/20">
+              <Lock className="w-9 h-9" />
+            </div>
+            <div className="space-y-2">
+              <Badge variant="danger">SESI PEMILIHAN DITUTUP</Badge>
+              <h3 className="text-xl font-display font-black text-text-main">Surat Suara Online Ditutup</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Pemungutan suara untuk agenda <strong className="text-text-main">{event.name}</strong> telah resmi berakhir.
+              </p>
+            </div>
+            <Link href={`/org/${slug}/livecount`} className="block w-full">
+              <Button className="w-full button-gradient font-bold h-11">
+                Lihat Hasil Suara
+              </Button>
+            </Link>
+          </Card>
+        </main>
+      ) : event.status === 'DRAFT' ? (
+        <main className="flex-1 flex items-center justify-center p-6">
+          <Card className="max-w-md w-full p-8 text-center bg-card border-2 border-brand-primary/30 shadow-2xl space-y-6 rounded-3xl">
+            <div className="w-18 h-18 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto border border-brand-primary/20 animate-pulse">
+              <Clock className="w-9 h-9" />
+            </div>
+            <div className="space-y-2">
+              <Badge variant="info">MENUNGGU HARI-H</Badge>
+              <h3 className="text-xl font-display font-black text-text-main">Pemilihan Belum Dimulai</h3>
+              <p className="text-xs text-text-muted leading-relaxed">
+                Surat suara online untuk <strong className="text-text-main">{event.name}</strong> menunggu panitia memulai sesi pemilihan serentak.
+              </p>
+            </div>
+          </Card>
+        </main>
+      ) : (
+        <main className="flex-1 flex items-center justify-center p-6">
         <AnimatePresence mode="wait">
           
           {/* LOGIN CARD */}
@@ -326,6 +367,7 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
 
         </AnimatePresence>
       </main>
+      )}
 
       {/* Footer */}
       <footer className="py-4 border-t border-border-main bg-background/50 text-center text-[10px] text-text-muted uppercase tracking-wider font-semibold">

@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 import React, { useState, useEffect, useRef, useTransition } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import jsQR from 'jsqr';
@@ -8,7 +10,8 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import { 
+import {
+  Clock,
   Vote, 
   QrCode, 
   Lock, 
@@ -54,6 +57,7 @@ interface BoothClientProps {
     hideRunningResult: boolean;
     voteConfirmation: boolean;
     anonymousVote: boolean;
+    status: string;
   };
   candidates: CandidateProps[];
   settings: {
@@ -378,8 +382,53 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
         )}
       </header>
 
-      {/* Main Body */}
-      <main className="flex-1 flex items-center justify-center p-8 z-10 relative overflow-y-auto">
+      {/* MAIN CLOSED / WAITING SCREEN GUARDS */}
+      {event.status === 'CLOSED' || event.status === 'ARCHIVED' ? (
+        <main className="flex-1 flex items-center justify-center p-8 z-10">
+          <Card className="max-w-lg w-full p-8 text-center bg-card border-2 border-danger/30 shadow-2xl space-y-6 rounded-3xl">
+            <div className="w-20 h-20 rounded-full bg-danger/10 text-danger flex items-center justify-center mx-auto border-2 border-danger/20">
+              <Lock className="w-10 h-10" />
+            </div>
+            <div className="space-y-2">
+              <Badge variant="danger" className="px-3 py-1 text-xs uppercase tracking-widest font-black">
+                SESI PEMILIHAN DITUTUP
+              </Badge>
+              <h3 className="text-2xl font-display font-black text-text-main">Pemilihan Ini Telah Ditutup</h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Pemungutan suara untuk agenda <strong className="text-text-main">{event.name}</strong> telah resmi diakhiri oleh panitia. Terima kasih atas partisipasi Anda!
+              </p>
+            </div>
+            <div className="pt-4 border-t border-border-main flex flex-col sm:flex-row gap-3">
+              <Link href={`/org/${slug}/livecount`} className="flex-1">
+                <Button className="w-full button-gradient font-bold h-11">
+                  Lihat Hasil Suara (Live Count)
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        </main>
+      ) : event.status === 'DRAFT' ? (
+        <main className="flex-1 flex items-center justify-center p-8 z-10">
+          <Card className="max-w-lg w-full p-8 text-center bg-card border-2 border-brand-primary/30 shadow-2xl space-y-6 rounded-3xl">
+            <div className="w-20 h-20 rounded-full bg-brand-primary/10 text-brand-primary flex items-center justify-center mx-auto border-2 border-brand-primary/20 animate-pulse">
+              <Clock className="w-10 h-10" />
+            </div>
+            <div className="space-y-2">
+              <Badge variant="info" className="px-3 py-1 text-xs uppercase tracking-widest font-black">
+                MENUNGGU HARI-H
+              </Badge>
+              <h3 className="text-2xl font-display font-black text-text-main">Pemilihan Belum Dimulai</h3>
+              <p className="text-sm text-text-muted leading-relaxed">
+                Bilik suara untuk <strong className="text-text-main">{event.name}</strong> telah siap dan sedang menunggu panitia membuka sesi pemungutan suara serentak.
+              </p>
+            </div>
+            <p className="text-[11px] text-text-muted italic">
+              Layar ini akan otomatis membuka surat suara saat panitia menekan tombol "Mulai Pemilihan".
+            </p>
+          </Card>
+        </main>
+      ) : (
+        <main className="flex-1 flex items-center justify-center p-8 z-10 relative overflow-y-auto">
         <AnimatePresence mode="wait">
           
           {/* STATE 1: CONTEXTUAL AUTH PORTAL */}
@@ -649,6 +698,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
 
         </AnimatePresence>
       </main>
+      )}
 
       {/* Footer Info */}
       <footer className="py-4 px-8 border-t border-border-main/50 bg-background/50 flex items-center justify-between shrink-0 text-[10px] text-text-muted uppercase tracking-wider font-semibold z-10">
