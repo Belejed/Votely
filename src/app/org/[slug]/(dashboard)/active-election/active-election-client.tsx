@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import Link from 'next/link';
 import { 
-  Vote, 
+  Vote,
+  Pencil, 
   MonitorPlay, 
   Smartphone, 
   Users, 
@@ -499,6 +500,21 @@ export default function ActiveElectionClient({
                   </div>
                 )}
               </div>
+
+              {/* Edit Candidate Button */}
+              {userRole !== 'OBSERVER' && (
+                <div className="pt-1">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => openEditCandidateModal(cand)}
+                    className="w-full flex items-center justify-center gap-1.5 text-xs font-bold border-border-main hover:border-brand-primary hover:text-brand-primary rounded-xl h-9"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    <span>Edit Profil Paslon (Nama, Visi & Misi)</span>
+                  </Button>
+                </div>
+              )}
             </Card>
           ))}
         </div>
