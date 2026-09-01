@@ -48,10 +48,11 @@ export default async function OnlineVotePage({
     anonymousVote: event.anonymousVote,
   };
 
-  const serializedCandidates = event.candidates.map((c: any) => ({
+  const serializedCandidates = (event.candidates || []).map((c: any) => ({
     id: c.id,
     number: c.number,
     name: c.name,
+    photoUrl: c.photoUrl || null,
     vision: c.vision,
     mission: c.mission,
     socialMedia: c.socialMedia,

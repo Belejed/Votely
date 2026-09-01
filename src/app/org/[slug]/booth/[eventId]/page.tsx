@@ -91,6 +91,7 @@ export default async function BoothPage({
     id: c.id,
     number: c.number,
     name: c.name,
+    photoUrl: c.photoUrl || null,
     vision: c.vision,
     mission: c.mission,
     socialMedia: c.socialMedia,

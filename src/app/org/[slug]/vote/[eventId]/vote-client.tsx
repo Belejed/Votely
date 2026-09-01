@@ -218,9 +218,13 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
                     </div>
 
                     <div className="space-y-4">
-                      <div className="w-12 h-12 rounded-2xl bg-brand-primary/5 flex items-center justify-center text-brand-primary border border-brand-primary/10">
-                        <User className="w-6 h-6" />
-                      </div>
+                      {cand.photoUrl ? (
+                        <img src={cand.photoUrl} alt={cand.name} className="w-20 h-20 rounded-2xl object-cover border-2 border-brand-primary/40 shadow-sm" />
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary border border-brand-primary/20 font-black text-xl">
+                          #{cand.number}
+                        </div>
+                      )}
                       
                       <div>
                         <h4 className="font-extrabold text-base text-text-main">{cand.name}</h4>

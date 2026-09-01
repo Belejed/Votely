@@ -39,6 +39,7 @@ export async function getLiveResultsAction(slug: string, eventId: string) {
         id: c.id,
         number: c.number,
         name: c.name,
+        photoUrl: c.photoUrl || null,
         vision: c.vision || '',
         mission: c.mission || '',
         socialMedia: c.socialMedia || {},
