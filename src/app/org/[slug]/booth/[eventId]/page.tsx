@@ -94,6 +94,7 @@ export default async function BoothPage({
     id: c.id,
     number: c.number,
     name: c.name,
+    category: c.category || 'OSIS',
     photoUrl: c.photoUrl || null,
     vision: c.vision,
     mission: c.mission,

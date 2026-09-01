@@ -33,6 +33,8 @@ interface CandidateProps {
   id: string;
   number: number;
   name: string;
+  photoUrl?: string | null;
+  category?: string | null;
   vision: string;
   mission: string;
   socialMedia: any;
@@ -95,43 +97,58 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
   const [selectedCandidate, setSelectedCandidate] = useState<CandidateProps | null>(null);
   const [selectedCandidates, setSelectedCandidates] = useState<CandidateProps[]>([]);
 
-  const isMultiVote = Boolean(event.multipleCandidate && (event.maxVotes || 2) > 1);
-  const maxVotes = event.maxVotes || 2;
+  // Distinct categories (e.g. OSIS, MPK)
+  const categoriesList = Array.from(new Set(candidates.map((c) => (c.category || 'OSIS'))));
+  const hasMultipleCategories = categoriesList.length > 1;
 
-  const handleToggleCandidate = (candidate: CandidateProps) => {
-    if (!isMultiVote) {
-      handleSelectCandidate(candidate);
-      return;
-    }
+  // Selected candidate per category: { "OSIS": cand, "MPK": cand }
+  const [selectedByCat, setSelectedByCat] = useState<Record<string, CandidateProps>>({});
 
-    setSelectedCandidates((prev) => {
-      const exists = prev.some((c) => c.id === candidate.id);
-      if (exists) {
-        return prev.filter((c) => c.id !== candidate.id);
+  const handleSelectCandidateForCategory = (candidate: CandidateProps) => {
+    const cat = candidate.category || 'OSIS';
+    setSelectedByCat((prev) => ({
+      ...prev,
+      [cat]: candidate
+    }));
+
+    if (!hasMultipleCategories) {
+      setSelectedCandidate(candidate);
+      if (event.voteConfirmation) {
+        setBoothState('CONFIRMATION');
       } else {
-        if (prev.length >= maxVotes) {
-          return [...prev.slice(1), candidate];
-        }
-        return [...prev, candidate];
+        handleCastVote(candidate.id);
       }
-    });
-  };
-
-  const handleProceedMultiConfirmation = () => {
-    if (selectedCandidates.length === 0) return;
-    if (event.voteConfirmation) {
-      setBoothState('CONFIRMATION');
-    } else {
-      handleCastMultipleVotes();
     }
   };
 
-  const handleCastMultipleVotes = async () => {
-    if (!activeVoter || selectedCandidates.length === 0) return;
+  const isAllCategoriesChosen = hasMultipleCategories
+    ? categoriesList.every((cat) => selectedByCat[cat])
+    : Object.keys(selectedByCat).length > 0;
+
+  const handleProceedToConfirmation = () => {
+    if (hasMultipleCategories) {
+      if (!isAllCategoriesChosen) return;
+      if (event.voteConfirmation) {
+        setBoothState('CONFIRMATION');
+      } else {
+        handleCastAllVotes();
+      }
+    } else {
+      const chosen = Object.values(selectedByCat)[0];
+      if (!chosen) return;
+      handleSelectCandidate(chosen);
+    }
+  };
+
+  const handleCastAllVotes = async () => {
+    if (!activeVoter) return;
+    const chosenList = Object.values(selectedByCat);
+    if (chosenList.length === 0) return;
+
     setIsPending(true);
     setErrorMsg(null);
     try {
-      const candidateIds = selectedCandidates.map((c) => c.id);
+      const candidateIds = chosenList.map((c) => c.id);
       const res = await castVoteAction(slug, event.id, candidateIds, activeVoter.id);
       if (res?.error) {
         setErrorMsg(res.error);
@@ -670,19 +687,25 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
             </motion.div>
           )}
 
-          {/* STATE 2: CANDIDATE GRID PAGE */}
+                    {/* STATE 2: CANDIDATE GRID PAGE */}
           {boothState === 'CANDIDATES' && activeVoter && (
             <motion.div
               key="candidates"
               initial={{ opacity: 0, y: 15 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -15 }}
-              className="w-full max-w-5xl space-y-8"
+              className="w-full max-w-5xl space-y-8 pb-12"
             >
               <div className="text-center space-y-2">
-                <Badge variant="info">STEP 2: BALLOT ROSTER</Badge>
-                <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-text-main">Select Your Candidate</h3>
-                <p className="text-xs text-text-muted max-w-lg mx-auto">Please review candidate profiles carefully, then tap the Vote button to register your selection.</p>
+                <Badge variant="info">LANGKAH 2: SURAT SUARA DIGITAL</Badge>
+                <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-text-main">
+                  {hasMultipleCategories ? 'Pilih Paslon OSIS & MPK' : 'Tentukan Pilihan Paslon Anda'}
+                </h3>
+                <p className="text-xs text-text-muted max-w-lg mx-auto">
+                  {hasMultipleCategories 
+                    ? 'Surat suara terbagi 2 kategori: Pilih 1 Paslon untuk OSIS dan 1 Paslon untuk MPK.' 
+                    : 'Cermati visi & misi pasangan calon, lalu tekan tombol Coblos untuk memilih.'}
+                </p>
               </div>
 
               {errorMsg && (
@@ -692,108 +715,135 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                 </div>
               )}
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidates.map((cand: any) => {
-                  const isSelected = isMultiVote 
-                    ? selectedCandidates.some((c) => c.id === cand.id)
-                    : selectedCandidate?.id === cand.id;
+              {/* Render Candidates grouped by Category */}
+              {categoriesList.map((catName) => {
+                const catCandidates = candidates.filter((c) => (c.category || 'OSIS') === catName);
+                const isSelectedInCat = selectedByCat[catName];
 
-                  return (
-                  <Card 
-                    key={cand.id} 
-                    hoverLift 
-                    onClick={() => handleToggleCandidate(cand)}
-                    className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
-                      isSelected 
-                        ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5' 
-                        : 'border-border-main hover:border-brand-primary/60'
-                    }`}
-                  >
-                    {/* Candidate Number Floating Badge */}
-                    <div className={`absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md ${
-                      isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
-                    }`}>
-                      {isSelected ? '✓' : `#${cand.number}`}
+                return (
+                  <div key={catName} className="space-y-4 pt-2">
+                    <div className="flex items-center justify-between border-b-2 border-border-main pb-2.5">
+                      <span className="text-base font-black text-text-main uppercase tracking-wider flex items-center gap-2">
+                        {catName === 'MPK' ? '🏛️ Kategori: Pemilihan Pengurus MPK' : '🗳️ Kategori: Pemilihan Ketua & Wakil OSIS'}
+                      </span>
+                      <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${
+                        isSelectedInCat 
+                          ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' 
+                          : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 animate-pulse'
+                      }`}>
+                        {isSelectedInCat ? `✓ Paslon #${isSelectedInCat.number} Terpilih` : 'Pilih 1 Paslon'}
+                      </span>
                     </div>
 
-                    <div className="space-y-3.5">
-                      {/* 3:4 Official Portrait Photo Frame */}
-                      <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
-                        {cand.photoUrl ? (
-                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
-                            <User className="w-12 h-12 opacity-40" />
-                            <span className="font-black text-sm">Paslon #{cand.number}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center pt-1">
-                        <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Kandidat Paslon #{cand.number}</span>
-                        <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
-                      </div>
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {catCandidates.map((cand: any) => {
+                        const isSelected = selectedByCat[catName]?.id === cand.id;
 
-                      <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
-                        <div>
-                          <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
-                          <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
-                        </div>
-                        {cand.mission && (
-                          <div>
-                            <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
-                            <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
-                          </div>
-                        )}
-                      </div>
+                        return (
+                          <Card 
+                            key={cand.id} 
+                            hoverLift 
+                            onClick={() => handleSelectCandidateForCategory(cand)}
+                            className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
+                              isSelected 
+                                ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5' 
+                                : 'border-border-main hover:border-brand-primary/60'
+                            }`}
+                          >
+                            <div className={`absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md ${
+                              isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
+                            }`}>
+                              {isSelected ? '✓' : `#${cand.number}`}
+                            </div>
+
+                            <div className="space-y-3.5">
+                              <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
+                                {cand.photoUrl ? (
+                                  <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
+                                ) : (
+                                  <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
+                                    <User className="w-12 h-12 opacity-40" />
+                                    <span className="font-black text-sm">Paslon #{cand.number}</span>
+                                  </div>
+                                )}
+                              </div>
+                              
+                              <div className="text-center pt-1">
+                                <div className="flex items-center justify-center gap-1.5 mb-1">
+                                  <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Paslon #{cand.number}</span>
+                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-background border border-border-main text-text-muted">
+                                    {catName}
+                                  </span>
+                                </div>
+                                <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
+                              </div>
+
+                              <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
+                                <div>
+                                  <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
+                                  <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
+                                </div>
+                                {cand.mission && (
+                                  <div>
+                                    <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
+                                    <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-border-main mt-4">
+                              <Button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleSelectCandidateForCategory(cand);
+                                }} 
+                                className={`w-full font-bold h-12 text-sm transition-all ${
+                                  isSelected 
+                                    ? 'bg-emerald-600 text-white shadow-md' 
+                                    : 'button-gradient text-white shadow-md shadow-brand-primary/20'
+                                }`} 
+                                disabled={isPending}
+                              >
+                                {isSelected ? `✓ Paslon #${cand.number} (${catName}) Terpilih` : `Coblos Paslon #${cand.number}`}
+                              </Button>
+                            </div>
+                          </Card>
+                        );
+                      })}
                     </div>
+                  </div>
+                );
+              })}
 
-                    <div className="pt-4 border-t border-border-main mt-4">
-                      <Button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleToggleCandidate(cand);
-                        }} 
-                        className={`w-full font-bold h-12 text-sm transition-all ${
-                          isSelected 
-                            ? 'bg-brand-primary text-white shadow-md shadow-brand-primary/30' 
-                            : 'button-gradient text-white shadow-md shadow-brand-primary/20'
-                        }`} 
-                        disabled={isPending}
-                      >
-                        {isSelected ? `✓ Paslon #${cand.number} Terpilih` : isMultiVote ? `+ Pilih Paslon #${cand.number}` : `Coblos Paslon #${cand.number}`}
-                      </Button>
-                    </div>
-                  </Card>
-                );})}
-              </div>
-
-              {/* Multi-Vote Floating Bar in Kiosk */}
-              {isMultiVote && (
+              {/* Multi-Category Sticky Bottom Confirmation in Kiosk */}
+              {hasMultipleCategories && (
                 <div className="sticky bottom-4 left-0 right-0 z-30 pt-2">
                   <div className="max-w-xl mx-auto bg-card/95 backdrop-blur-md border-2 border-brand-primary rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
                     <div>
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-black text-brand-primary uppercase tracking-wider">
-                          Pilih {maxVotes} Paslon (OSIS & MPK)
+                          Surat Suara Terpadu
                         </span>
-                        <span className="text-[11px] font-extrabold px-2.5 py-0.5 rounded-full bg-brand-primary/10 text-brand-primary border border-brand-primary/20">
-                          {selectedCandidates.length} dari {maxVotes} Terpilih
+                        <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
+                          isAllCategoriesChosen ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' : 'bg-brand-primary/10 text-brand-primary border border-brand-primary/30'
+                        }`}>
+                          {Object.keys(selectedByCat).length} dari {categoriesList.length} Kategori Dipilih
                         </span>
                       </div>
                       <p className="text-[11px] text-text-muted mt-0.5">
-                        {selectedCandidates.length === maxVotes 
-                          ? 'Lengkap! Silakan klik tombol untuk konfirmasi.' 
-                          : `Pilih ${maxVotes - selectedCandidates.length} paslon lagi.`}
+                        {isAllCategoriesChosen 
+                          ? 'Lengkap (OSIS & MPK)! Silakan klik tombol untuk konfirmasi.' 
+                          : `Pilih 1 paslon untuk setiap kategori (${categoriesList.filter(cat => !selectedByCat[cat]).join(', ')} belum dipilih).`}
                       </p>
                     </div>
 
                     <Button
-                      onClick={handleProceedMultiConfirmation}
-                      disabled={selectedCandidates.length === 0 || isPending}
+                      onClick={handleProceedToConfirmation}
+                      disabled={!isAllCategoriesChosen || isPending}
                       className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
                     >
-                      <span>Lanjut Konfirmasi ({selectedCandidates.length})</span>
+                      <span>Lanjut Konfirmasi</span>
                       <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Button>
                   </div>
@@ -803,7 +853,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
           )}
 
           {/* STATE 3: BALLOT CONFIRMATION */}
-          {boothState === 'CONFIRMATION' && activeVoter && (selectedCandidate || selectedCandidates.length > 0) && (
+          {boothState === 'CONFIRMATION' && activeVoter && (Object.keys(selectedByCat).length > 0 || selectedCandidate) && (
             <motion.div
               key="confirmation"
               initial={{ scale: 0.95, opacity: 0 }}
@@ -811,7 +861,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
               exit={{ scale: 0.95, opacity: 0 }}
               className="w-full max-w-lg"
             >
-              <Card className="p-6 text-center border-2 border-brand-primary/10 shadow-2xl space-y-6">
+              <Card className="p-6 sm:p-8 text-center border-2 border-brand-primary/20 shadow-2xl space-y-6">
                 <div className="w-16 h-16 rounded-full bg-brand-primary/10 flex items-center justify-center text-brand-primary mx-auto">
                   <HelpCircle className="w-8 h-8" />
                 </div>
@@ -819,20 +869,34 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                 <div className="space-y-1.5">
                   <Badge variant="warning" className="px-3 py-1 font-bold">KONFIRMASI SURAT SUARA</Badge>
                   <h4 className="text-xl font-display font-extrabold text-text-main">
-                    {isMultiVote ? `Konfirmasi ${selectedCandidates.length} Paslon Terpilih?` : 'Kirimkan Suara Anda?'}
+                    {hasMultipleCategories ? 'Konfirmasi Pilihan OSIS & MPK Anda?' : 'Kirimkan Suara Anda?'}
                   </h4>
                   <p className="text-xs text-text-muted px-4 leading-relaxed">
-                    {isMultiVote ? 'Periksa kembali daftar pasangan calon yang Anda pilih (misal OSIS & MPK):' : 'Anda akan memasukkan suara sah untuk:'}
+                    {hasMultipleCategories 
+                      ? 'Periksa kembali daftar pasangan calon yang Anda pilih untuk masing-masing kategori:' 
+                      : 'Anda akan memasukkan suara sah untuk:'}
                   </p>
                 </div>
 
-                <div className="space-y-2.5 max-h-56 overflow-y-auto pr-1">
-                  {(isMultiVote ? selectedCandidates : (selectedCandidate ? [selectedCandidate] : [])).map((cand) => (
-                    <div key={cand.id} className="p-3 bg-background border border-border-main rounded-2xl text-left flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-brand-primary/15 text-brand-primary font-black text-xs flex items-center justify-center shrink-0">
-                        #{cand.number}
-                      </span>
+                <div className="space-y-2.5 max-h-60 overflow-y-auto pr-1">
+                  {(hasMultipleCategories ? Object.values(selectedByCat) : (selectedCandidate ? [selectedCandidate] : Object.values(selectedByCat))).map((cand) => (
+                    <div key={cand.id} className="p-3.5 bg-background border border-border-main rounded-2xl text-left flex items-center gap-3.5">
+                      {cand.photoUrl ? (
+                        <img src={cand.photoUrl} alt={cand.name} className="w-12 h-16 aspect-[3/4] rounded-xl object-cover border border-border-main shrink-0" />
+                      ) : (
+                        <span className="w-12 h-16 rounded-xl bg-brand-primary/15 text-brand-primary font-black text-base flex items-center justify-center shrink-0 border border-border-main">
+                          #{cand.number}
+                        </span>
+                      )}
                       <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-1.5 mb-0.5">
+                          <span className="text-[10px] text-brand-primary uppercase font-bold tracking-wider block">
+                            Paslon #{cand.number}
+                          </span>
+                          <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-card border border-border-main text-text-muted uppercase">
+                            {cand.category || 'OSIS'}
+                          </span>
+                        </div>
                         <strong className="text-text-main text-sm block truncate">{cand.name}</strong>
                         <span className="text-[11px] text-text-muted line-clamp-1 block">{cand.vision || 'Visi & Misi Terdaftar'}</span>
                       </div>
@@ -842,7 +906,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
 
                 <div className="flex gap-3">
                   <Button 
-                    onClick={isMultiVote ? handleCastMultipleVotes : () => selectedCandidate && handleCastVote(selectedCandidate.id)} 
+                    onClick={hasMultipleCategories ? handleCastAllVotes : () => handleCastVote(Object.values(selectedByCat)[0]?.id || selectedCandidate?.id || '')} 
                     className="flex-1 button-gradient h-12 font-bold text-sm" 
                     disabled={isPending}
                   >
