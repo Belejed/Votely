@@ -39,7 +39,7 @@ export async function createStaffUserAction(
       return { error: 'Organisasi tidak ditemukan.' };
     }
 
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -116,7 +116,7 @@ export async function deleteStaffUserAction(slug: string, userId: string) {
       return { error: 'Organisasi tidak ditemukan.' };
     }
 
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 

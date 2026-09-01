@@ -41,7 +41,7 @@ export async function importVotersAction(slug: string, voterList: any[]) {
   }
 
   // Verify boundary
-  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
     return { error: 'Tenant boundary violation.' };
   }
 
@@ -111,12 +111,12 @@ export async function resetVoterStatusAction(voterId: string, slug: string) {
   try {
     const org = await db.organization.findUnique({ where: { slug } });
     if (!org) return { error: 'Organization not found.' };
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const voter = await db.voter.findUnique({ where: { id: voterId } });
-    if (!voter || voter.organizationId !== org.id) {
+    if (!voter || !voter.organizationId || voter.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -150,7 +150,7 @@ export async function deleteVoterAction(voterId: string, slug: string) {
   try {
     const org = await db.organization.findUnique({ where: { slug } });
     if (!org) return { error: 'Organization not found.' };
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -199,7 +199,7 @@ export async function regenerateVoterPassAction(voterId: string, slug: string) {
   try {
     const org = await db.organization.findUnique({ where: { slug } });
     if (!org) return { error: 'Organization not found.' };
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -256,7 +256,7 @@ export async function createSingleVoterAction(
     return { error: 'Organisasi tidak ditemukan.' };
   }
   
-  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
     return { error: 'Unauthorized: tenant boundary violation.' };
   }
 

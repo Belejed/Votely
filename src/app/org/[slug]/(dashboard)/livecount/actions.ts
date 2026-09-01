@@ -11,7 +11,7 @@ export async function getLiveResultsAction(slug: string, eventId: string) {
     const org = await db.organization.findUnique({ where: { slug } });
     if (!org) return { error: 'Organization not found.' };
 
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 

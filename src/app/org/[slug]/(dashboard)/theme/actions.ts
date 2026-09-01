@@ -30,7 +30,7 @@ export async function saveThemeAction(
   }
 
   // Verify boundary
-  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
     return { error: 'Tenant boundary violation.' };
   }
 

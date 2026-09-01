@@ -19,7 +19,7 @@ export async function createEventAction(slug: string, wizardData: any) {
     return { error: 'Organisasi tidak ditemukan.' };
   }
 
-  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
     return { error: 'Unauthorized: tenant boundary violation.' };
   }
 
@@ -148,12 +148,12 @@ export async function archiveEventAction(eventId: string, slug: string) {
     if (!org) {
       return { error: 'Organization not found.' };
     }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    if (!event || !event.organizationId || event.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
     await db.event.update({
@@ -182,12 +182,12 @@ export async function deleteEventAction(eventId: string, slug: string) {
     if (!org) {
       return { error: 'Organization not found.' };
     }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    if (!event || !event.organizationId || event.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -225,7 +225,7 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
     if (!org) {
       return { error: 'Organization not found.' };
     }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -234,7 +234,7 @@ export async function updateCandidatePhotoAction(candidateId: string, photoUrl: 
       include: { event: true }
     });
 
-    if (!candidate || candidate.event.organizationId !== org.id) {
+    if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -263,12 +263,12 @@ export async function startEventAction(eventId: string, slug: string) {
     if (!org) {
       return { error: 'Organization not found.' };
     }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    if (!event || !event.organizationId || event.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -324,12 +324,12 @@ export async function closeEventAction(eventId: string, slug: string) {
     if (!org) {
       return { error: 'Organization not found.' };
     }
-    if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+    if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
     const event = await db.event.findUnique({ where: { id: eventId } });
-    if (!event || event.organizationId !== org.id) {
+    if (!event || !event.organizationId || event.organizationId !== org.id) {
       return { error: 'Unauthorized: tenant boundary violation.' };
     }
 
@@ -380,7 +380,7 @@ export async function updateCandidateDetailsAction(
   const org = await db.organization.findUnique({ where: { slug } });
   if (!org) return { error: 'Organization not found.' };
 
-  if (session.role !== 'SUPER_ADMIN' && session.organizationId !== org.id) {
+  if (session.role !== 'SUPER_ADMIN' && session.organizationSlug !== slug && session.organizationId !== org.id) {
     return { error: 'Unauthorized: tenant boundary violation.' };
   }
 
@@ -389,7 +389,7 @@ export async function updateCandidateDetailsAction(
     include: { event: true }
   });
 
-  if (!candidate || candidate.event.organizationId !== org.id) {
+  if (!candidate || !candidate.event || candidate.event.organizationId !== org.id) {
     return { error: 'Candidate not found or unauthorized.' };
   }
 
