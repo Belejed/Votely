@@ -13,7 +13,7 @@ export default async function PrintVotersPage({
 }) {
   const { slug } = await params;
   const resolvedSearchParams = await searchParams;
-  const layout = resolvedSearchParams.layout || '4';
+  const layout = resolvedSearchParams.layout || '1';
 
   // SECURITY: Require authenticated admin session
   const session = await getAdminSession();
