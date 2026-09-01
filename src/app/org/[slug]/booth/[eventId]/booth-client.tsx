@@ -526,10 +526,16 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                     </div>
 
                     <div className="space-y-4">
-                      {/* Placeholder Avatar */}
-                      <div className="w-14 h-14 rounded-2xl bg-brand-primary/5 flex items-center justify-center text-brand-primary border border-brand-primary/10">
-                        <User className="w-7 h-7" />
-                      </div>
+                      {/* Candidate Photo / Avatar Banner */}
+                      {cand.photoUrl ? (
+                        <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-brand-primary/40 shadow-md">
+                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover" />
+                        </div>
+                      ) : (
+                        <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary border border-brand-primary/20 font-black text-2xl">
+                          #{cand.number}
+                        </div>
+                      )}
                       
                       <div className="space-y-1">
                         <h4 className="font-extrabold text-lg text-text-main">{cand.name}</h4>
