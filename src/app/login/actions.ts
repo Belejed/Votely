@@ -22,16 +22,17 @@ export async function loginAction(prevState: any, formData: FormData) {
       return { error: 'Kode instansi / workspace tidak ditemukan. Silakan periksa kembali.' };
     }
 
-    // 2. Find User in this organization by username or email
+    // 2. Find User in this organization by username, name, or email prefix
     const usersInOrg = await db.user.findMany({
       where: { organizationId: org.id }
     });
 
     const user = usersInOrg.find((u: any) => {
-      const uName = (u.username || '').toLowerCase().trim();
+      const uName = (u.name || '').toLowerCase().trim();
+      const uUsername = (u.username || '').toLowerCase().trim();
       const uEmail = (u.email || '').toLowerCase().trim();
       const uEmailPrefix = uEmail.split('@')[0];
-      return uName === username || uEmail === username || uEmailPrefix === username;
+      return uUsername === username || uEmail === username || uEmailPrefix === username || uName === username;
     });
 
     if (!user) {
@@ -61,9 +62,9 @@ export async function loginAction(prevState: any, formData: FormData) {
       role: user.role,
       slug: org.slug,
     };
-  } catch (error) {
+  } catch (error: any) {
     console.error('Login action error:', error);
-    return { error: 'Terjadi kesalahan pada sistem. Silakan coba lagi.' };
+    return { error: error.message || 'Terjadi kesalahan pada sistem. Silakan coba lagi.' };
   }
 }
 
