@@ -34,7 +34,7 @@ export default async function LiveCountPage({
 
   // 2. Fetch all published events to select from
   const events = await db.event.findMany({
-    where: { organizationId: org.id, status: 'PUBLISHED' },
+    where: { organizationId: org.id },
     orderBy: { createdAt: 'desc' },
     select: { id: true, name: true }
   });
