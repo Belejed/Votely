@@ -92,8 +92,35 @@ export default function NewEventWizardPage() {
     if (!file) return;
     const reader = new FileReader();
     reader.onload = (evt) => {
-      const b64 = evt.target?.result as string;
-      setNewCand(prev => ({ ...prev, photoUrl: b64 }));
+      const rawDataUrl = evt.target?.result as string;
+      const img = new Image();
+      img.onload = () => {
+        // High quality canvas compression (max 480x480) for instant upload & crisp display
+        const canvas = document.createElement('canvas');
+        const maxDim = 480;
+        let width = img.width;
+        let height = img.height;
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (ctx) {
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedB64 = canvas.toDataURL('image/jpeg', 0.85);
+          setNewCand(prev => ({ ...prev, photoUrl: compressedB64 }));
+        }
+      };
+      img.src = rawDataUrl;
     };
     reader.readAsDataURL(file);
   };
@@ -158,7 +185,7 @@ export default function NewEventWizardPage() {
       if (res?.error) {
         setErrorMsg(res.error);
       } else if (res?.success) {
-        router.push(`/org/${slug}/dashboard`);
+        router.push(`/org/${slug}/active-election`);
       }
     });
   };

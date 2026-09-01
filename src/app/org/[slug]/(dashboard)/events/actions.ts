@@ -53,6 +53,16 @@ export async function createEventAction(slug: string, wizardData: any) {
       cameraScan,
     } = wizardData;
 
+    // Archive previously published events in this org so new election is active
+    try {
+      await db.event.updateMany({
+        where: { organizationId: org.id, status: 'PUBLISHED' },
+        data: { status: 'ARCHIVED' },
+      });
+    } catch (archErr) {
+      console.warn('Could not archive previous events:', archErr);
+    }
+
     // 1. Create Event
     const event = await db.event.create({
       data: {
