@@ -212,40 +212,45 @@ export default function VoteClientPage({ event, candidates, slug, orgName }: Vot
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {candidates.map((cand: any) => (
-                  <Card key={cand.id} hoverLift className="flex flex-col justify-between p-6 bg-card border-border-main border relative overflow-hidden">
-                    <div className="absolute top-0 right-0 w-12 h-12 bg-brand-primary/10 text-brand-primary flex items-center justify-center font-display font-black text-sm rounded-bl-2xl">
+                  <Card key={cand.id} hoverLift className="flex flex-col justify-between p-5 bg-card border-2 border-border-main hover:border-brand-primary/60 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl">
+                    <div className="absolute top-3 right-3 z-10 w-10 h-10 bg-brand-primary text-white flex items-center justify-center font-display font-black text-sm rounded-2xl shadow-md">
                       #{cand.number}
                     </div>
 
-                    <div className="space-y-4">
-                      {cand.photoUrl ? (
-                        <img src={cand.photoUrl} alt={cand.name} className="w-20 h-20 rounded-2xl object-cover border-2 border-brand-primary/40 shadow-sm" />
-                      ) : (
-                        <div className="w-16 h-16 rounded-2xl bg-brand-primary/10 flex items-center justify-center text-brand-primary border border-brand-primary/20 font-black text-xl">
-                          #{cand.number}
-                        </div>
-                      )}
+                    <div className="space-y-3.5">
+                      <div className="w-full h-44 rounded-2xl overflow-hidden bg-background border border-border-main flex items-center justify-center relative">
+                        {cand.photoUrl ? (
+                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="flex flex-col items-center justify-center gap-1.5 text-brand-primary">
+                            <User className="w-10 h-10 opacity-40" />
+                            <span className="font-black text-sm">Paslon #{cand.number}</span>
+                          </div>
+                        )}
+                      </div>
                       
-                      <div>
-                        <h4 className="font-extrabold text-base text-text-main">{cand.name}</h4>
-                        <span className="text-[9px] text-text-muted uppercase font-bold tracking-wider">Candidate #{cand.number}</span>
+                      <div className="text-center pt-1">
+                        <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Kandidat Paslon #{cand.number}</span>
+                        <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
                       </div>
 
-                      <div className="space-y-2 text-xs text-text-muted">
+                      <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
                         <div>
-                          <strong className="text-text-main block">Vision</strong>
-                          <p className="leading-relaxed mt-0.5">{cand.vision || '—'}</p>
+                          <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
+                          <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
                         </div>
-                        <div>
-                          <strong className="text-text-main block">Missions</strong>
-                          <p className="leading-relaxed mt-0.5">{cand.mission || '—'}</p>
-                        </div>
+                        {cand.mission && (
+                          <div>
+                            <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
+                            <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
+                          </div>
+                        )}
                       </div>
                     </div>
 
-                    <div className="pt-4 border-t border-border-main mt-6">
-                      <Button onClick={() => handleSelectCandidate(cand)} className="w-full button-gradient font-bold h-10" disabled={isPending}>
-                        Select Candidate
+                    <div className="pt-4 border-t border-border-main mt-4">
+                      <Button onClick={() => handleSelectCandidate(cand)} className="w-full button-gradient font-bold h-11 text-xs shadow-md shadow-brand-primary/20" disabled={isPending}>
+                        Coblos Paslon #{cand.number}
                       </Button>
                     </div>
                   </Card>

@@ -191,3 +191,22 @@ export async function deleteEventAction(eventId: string, orgId: string, slug: st
     return { error: 'Failed to delete event.' };
   }
 }
+
+export async function updateCandidatePhotoAction(candidateId: string, photoUrl: string, slug: string) {
+  const session = await getAdminSession();
+  if (!session) return { error: 'Unauthorized.' };
+
+  try {
+    await db.candidate.update({
+      where: { id: candidateId },
+      data: { photoUrl },
+    });
+
+    revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/livecount`);
+    return { success: true };
+  } catch (error: any) {
+    return { error: error?.message || 'Failed to update candidate photo.' };
+  }
+}
