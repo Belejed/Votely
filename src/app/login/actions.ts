@@ -14,9 +14,9 @@ export async function loginAction(prevState: any, formData: FormData) {
   }
 
   try {
-    // 1. Find Organization (case-insensitive search across all orgs)
-    const allOrgs = await db.organization.findMany({});
-    const org = allOrgs.find((o: any) => o.slug && o.slug.toLowerCase().trim() === orgSlug);
+    // 1. Find Organization
+    const allOrgs = await db.organization.findMany();
+    const org = allOrgs.find((o) => o.slug && o.slug.toLowerCase().trim() === orgSlug);
 
     if (!org) {
       return { error: `Kode instansi "${orgSlug}" tidak ditemukan. Silakan periksa kembali.` };
@@ -27,12 +27,11 @@ export async function loginAction(prevState: any, formData: FormData) {
       where: { organizationId: org.id }
     });
 
-    const user = usersInOrg.find((u: any) => {
+    const user = usersInOrg.find((u) => {
       const uName = (u.name || '').toLowerCase().trim();
-      const uUsername = (u.username || '').toLowerCase().trim();
       const uEmail = (u.email || '').toLowerCase().trim();
       const uEmailPrefix = uEmail.split('@')[0];
-      return uUsername === username || uEmail === username || uEmailPrefix === username || uName === username;
+      return uEmail === username || uEmailPrefix === username || uName === username;
     });
 
     if (!user) {
@@ -49,7 +48,7 @@ export async function loginAction(prevState: any, formData: FormData) {
     const sessionData = {
       userId: user.id,
       name: user.name,
-      email: user.email || `${user.username || username}@${org.slug}.local`,
+      email: user.email || `${username}@${org.slug}.local`,
       role: user.role,
       organizationId: org.id,
       organizationSlug: org.slug,

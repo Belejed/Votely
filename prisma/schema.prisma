@@ -18,6 +18,7 @@ enum Role {
   SUPER_ADMIN
   ADMIN
   STAFF
+  OBSERVER
 }
 
 enum VotingMode {

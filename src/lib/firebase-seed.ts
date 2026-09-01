@@ -20,7 +20,7 @@ async function seed() {
   
   for (const model of models) {
     try {
-      await db[model].deleteMany({});
+      await (db as any)[model].deleteMany({});
       console.log(`Cleared model collection: ${model}`);
     } catch (e) {
       console.error(`Error clearing ${model}:`, e);

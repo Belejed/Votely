@@ -38,9 +38,9 @@ function LoginFormContent() {
       if (res?.error) {
         setErrorMsg(res.error);
       } else if (res?.success) {
-        if (res.role === 'SUPER_ADMIN') {
+        if ((res.role as string) === 'SUPER_ADMIN') {
           router.push('/superadmin');
-        } else if (res.role === 'OBSERVER' && res.slug) {
+        } else if ((res.role as string) === 'OBSERVER' && res.slug) {
           router.push(`/org/${res.slug}/livecount`);
         } else if (res.slug) {
           router.push(`/org/${res.slug}/dashboard`);

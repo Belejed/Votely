@@ -57,7 +57,6 @@ export async function createStaffUserAction(
     const newUser = await db.user.create({
       data: {
         name: name.trim(),
-        username: cleanUsername,
         email: `${cleanUsername}@${slug}.local`,
         passwordHash,
         role: role || 'STAFF',
@@ -83,7 +82,7 @@ export async function createStaffUserAction(
       user: {
         id: newUser.id,
         name: newUser.name,
-        username: newUser.username || cleanUsername,
+        username: cleanUsername,
         role: newUser.role,
         createdAt: newUser.createdAt.toISOString()
       }

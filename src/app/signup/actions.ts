@@ -58,7 +58,6 @@ export async function signupAction(prevState: any, formData: FormData) {
     const newUser = await db.user.create({
       data: {
         name: adminName,
-        username: username,
         email: `${username}@${slug}.local`,
         passwordHash: passwordHash,
         role: 'ADMIN',
