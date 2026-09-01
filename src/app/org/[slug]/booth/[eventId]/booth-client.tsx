@@ -103,6 +103,7 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
 
   // Selected candidate per category: { "OSIS": cand, "MPK": cand }
   const [selectedByCat, setSelectedByCat] = useState<Record<string, CandidateProps>>({});
+  const [categoryStep, setCategoryStep] = useState<number>(0);
 
   const handleSelectCandidateForCategory = (candidate: CandidateProps) => {
     const cat = candidate.category || 'OSIS';
@@ -441,6 +442,8 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
     setActiveVoter(null);
     setSelectedCandidate(null);
     setSelectedCandidates([]);
+    setSelectedByCat({});
+    setCategoryStep(0);
     setManualId('');
     setManualPass('');
     setErrorMsg(null);
@@ -687,24 +690,73 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
             </motion.div>
           )}
 
-                    {/* STATE 2: CANDIDATE GRID PAGE */}
-          {boothState === 'CANDIDATES' && activeVoter && (
+                    {/* STATE 2: CANDIDATE GRID PAGE (2-Screen Sequential Flow) */}
+          {boothState === 'CANDIDATES' && activeVoter && (() => {
+            const currentCatName = categoriesList[categoryStep] || 'OSIS';
+            const currentCatCandidates = candidates.filter((c) => (c.category || 'OSIS') === currentCatName);
+            const currentSelected = selectedByCat[currentCatName];
+            const isLastCategory = categoryStep === categoriesList.length - 1;
+
+            return (
             <motion.div
-              key="candidates"
-              initial={{ opacity: 0, y: 15 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -15 }}
-              className="w-full max-w-5xl space-y-8 pb-12"
+              key={`candidates-step-${categoryStep}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="w-full max-w-5xl space-y-6 pb-12"
             >
-              <div className="text-center space-y-2">
-                <Badge variant="info">LANGKAH 2: SURAT SUARA DIGITAL</Badge>
+              {/* Multi-Step Header Indicator */}
+              {hasMultipleCategories && (
+                <div className="max-w-xl mx-auto bg-card border-2 border-border-main p-3.5 rounded-2xl shadow-xs">
+                  <div className="flex items-center justify-between gap-2 text-xs font-black">
+                    {categoriesList.map((cat, idx) => {
+                      const isDone = Boolean(selectedByCat[cat]);
+                      const isCurrent = idx === categoryStep;
+
+                      return (
+                        <div key={cat} className="flex-1 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCategoryStep(idx)}
+                            className={`flex-1 py-2.5 px-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-brand-primary text-white border-brand-primary shadow-md'
+                                : isDone
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
+                                : 'bg-background border-border-main text-text-muted hover:border-brand-primary/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                isCurrent ? 'bg-white text-brand-primary' : isDone ? 'bg-emerald-600 text-white' : 'bg-border-main text-text-muted'
+                              }`}>
+                                {isDone ? '✓' : idx + 1}
+                              </span>
+                              <span className="truncate">{cat === 'MPK' ? '🏛️ MPK' : '🗳️ OSIS'}</span>
+                            </div>
+                            {isDone && !isCurrent && (
+                              <span className="text-[10px] font-bold opacity-80 shrink-0">#{selectedByCat[cat].number}</span>
+                            )}
+                          </button>
+                          {idx < categoriesList.length - 1 && (
+                            <span className="text-text-muted/40 font-black">→</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="text-center space-y-1.5">
+                <Badge variant="info">
+                  {hasMultipleCategories ? `TAHAP ${categoryStep + 1} DARI ${categoriesList.length}: ${currentCatName.toUpperCase()}` : 'BILIK SUARA DIGITAL'}
+                </Badge>
                 <h3 className="text-2xl sm:text-3xl font-display font-extrabold text-text-main">
-                  {hasMultipleCategories ? 'Pilih Paslon OSIS & MPK' : 'Tentukan Pilihan Paslon Anda'}
+                  {currentCatName === 'MPK' ? '🏛️ Pemilihan Pengurus MPK' : '🗳️ Pemilihan Ketua & Wakil OSIS'}
                 </h3>
                 <p className="text-xs text-text-muted max-w-lg mx-auto">
-                  {hasMultipleCategories 
-                    ? 'Surat suara terbagi 2 kategori: Pilih 1 Paslon untuk OSIS dan 1 Paslon untuk MPK.' 
-                    : 'Cermati visi & misi pasangan calon, lalu tekan tombol Coblos untuk memilih.'}
+                  Silakan pilih 1 pasangan calon untuk kategori <strong className="text-text-main">{currentCatName}</strong> dengan menyentuh kartu di bawah ini.
                 </p>
               </div>
 
@@ -715,142 +767,137 @@ export default function BoothClientPage({ event, candidates, settings, slug, org
                 </div>
               )}
 
-              {/* Render Candidates grouped by Category */}
-              {categoriesList.map((catName) => {
-                const catCandidates = candidates.filter((c) => (c.category || 'OSIS') === catName);
-                const isSelectedInCat = selectedByCat[catName];
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {currentCatCandidates.map((cand: any) => {
+                  const isSelected = currentSelected?.id === cand.id;
 
-                return (
-                  <div key={catName} className="space-y-4 pt-2">
-                    <div className="flex items-center justify-between border-b-2 border-border-main pb-2.5">
-                      <span className="text-base font-black text-text-main uppercase tracking-wider flex items-center gap-2">
-                        {catName === 'MPK' ? '🏛️ Kategori: Pemilihan Pengurus MPK' : '🗳️ Kategori: Pemilihan Ketua & Wakil OSIS'}
-                      </span>
-                      <span className={`text-[11px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${
-                        isSelectedInCat 
-                          ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' 
-                          : 'bg-amber-500/10 text-amber-600 border border-amber-500/30 animate-pulse'
+                  return (
+                    <Card 
+                      key={cand.id} 
+                      hoverLift 
+                      onClick={() => handleSelectCandidateForCategory(cand)}
+                      className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
+                        isSelected 
+                          ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5' 
+                          : 'border-border-main hover:border-brand-primary/60'
+                      }`}
+                    >
+                      <div className={`absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md ${
+                        isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
                       }`}>
-                        {isSelectedInCat ? `✓ Paslon #${isSelectedInCat.number} Terpilih` : 'Pilih 1 Paslon'}
+                        {isSelected ? '✓' : `#${cand.number}`}
+                      </div>
+
+                      <div className="space-y-3.5">
+                        <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
+                          {cand.photoUrl ? (
+                            <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
+                          ) : (
+                            <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
+                              <User className="w-12 h-12 opacity-40" />
+                              <span className="font-black text-sm">Paslon #{cand.number}</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        <div className="text-center pt-1">
+                          <div className="flex items-center justify-center gap-1.5 mb-1">
+                            <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Paslon #{cand.number}</span>
+                            <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-background border border-border-main text-text-muted">
+                              {currentCatName}
+                            </span>
+                          </div>
+                          <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
+                        </div>
+
+                        <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
+                          <div>
+                            <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
+                            <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
+                          </div>
+                          {cand.mission && (
+                            <div>
+                              <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
+                              <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="pt-4 border-t border-border-main mt-4">
+                        <Button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSelectCandidateForCategory(cand);
+                          }} 
+                          className={`w-full font-bold h-12 text-sm transition-all ${
+                            isSelected 
+                              ? 'bg-emerald-600 text-white shadow-md' 
+                              : 'button-gradient text-white shadow-md shadow-brand-primary/20'
+                          }`} 
+                          disabled={isPending}
+                        >
+                          {isSelected ? `✓ Paslon #${cand.number} Terpilih` : `Pilih Paslon #${cand.number}`}
+                        </Button>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+
+              {/* Wizard Navigation Bar (Sticky Bottom) in Kiosk */}
+              <div className="sticky bottom-4 left-0 right-0 z-30 pt-2">
+                <div className="max-w-xl mx-auto bg-card/95 backdrop-blur-md border-2 border-brand-primary rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    {hasMultipleCategories && categoryStep > 0 && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCategoryStep(categoryStep - 1)}
+                        className="rounded-xl h-11 px-4 text-xs font-bold border-border-main"
+                      >
+                        ← Kembali
+                      </Button>
+                    )}
+                    <div>
+                      <span className="text-xs font-black text-brand-primary block">
+                        {currentSelected ? `✓ Paslon #${currentSelected.number} Terpilih (${currentCatName})` : `Belum Memilih Paslon ${currentCatName}`}
                       </span>
-                    </div>
-
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                      {catCandidates.map((cand: any) => {
-                        const isSelected = selectedByCat[catName]?.id === cand.id;
-
-                        return (
-                          <Card 
-                            key={cand.id} 
-                            hoverLift 
-                            onClick={() => handleSelectCandidateForCategory(cand)}
-                            className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
-                              isSelected 
-                                ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5' 
-                                : 'border-border-main hover:border-brand-primary/60'
-                            }`}
-                          >
-                            <div className={`absolute top-3 right-3 z-10 w-11 h-11 flex items-center justify-center font-display font-black text-lg rounded-2xl shadow-md ${
-                              isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
-                            }`}>
-                              {isSelected ? '✓' : `#${cand.number}`}
-                            </div>
-
-                            <div className="space-y-3.5">
-                              <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
-                                {cand.photoUrl ? (
-                                  <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
-                                ) : (
-                                  <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
-                                    <User className="w-12 h-12 opacity-40" />
-                                    <span className="font-black text-sm">Paslon #{cand.number}</span>
-                                  </div>
-                                )}
-                              </div>
-                              
-                              <div className="text-center pt-1">
-                                <div className="flex items-center justify-center gap-1.5 mb-1">
-                                  <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Paslon #{cand.number}</span>
-                                  <span className="text-[9px] font-black px-1.5 py-0.2 rounded bg-background border border-border-main text-text-muted">
-                                    {catName}
-                                  </span>
-                                </div>
-                                <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
-                              </div>
-
-                              <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
-                                <div>
-                                  <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
-                                  <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
-                                </div>
-                                {cand.mission && (
-                                  <div>
-                                    <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
-                                    <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-
-                            <div className="pt-4 border-t border-border-main mt-4">
-                              <Button 
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleSelectCandidateForCategory(cand);
-                                }} 
-                                className={`w-full font-bold h-12 text-sm transition-all ${
-                                  isSelected 
-                                    ? 'bg-emerald-600 text-white shadow-md' 
-                                    : 'button-gradient text-white shadow-md shadow-brand-primary/20'
-                                }`} 
-                                disabled={isPending}
-                              >
-                                {isSelected ? `✓ Paslon #${cand.number} (${catName}) Terpilih` : `Coblos Paslon #${cand.number}`}
-                              </Button>
-                            </div>
-                          </Card>
-                        );
-                      })}
+                      <span className="text-[11px] text-text-muted block">
+                        {isLastCategory 
+                          ? (isAllCategoriesChosen ? 'Seluruh kategori lengkap! Klik konfirmasi.' : 'Pilih paslon untuk melanjutkan.') 
+                          : `Tahap ${categoryStep + 1} dari ${categoriesList.length}`}
+                      </span>
                     </div>
                   </div>
-                );
-              })}
 
-              {/* Multi-Category Sticky Bottom Confirmation in Kiosk */}
-              {hasMultipleCategories && (
-                <div className="sticky bottom-4 left-0 right-0 z-30 pt-2">
-                  <div className="max-w-xl mx-auto bg-card/95 backdrop-blur-md border-2 border-brand-primary rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
-                    <div>
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-black text-brand-primary uppercase tracking-wider">
-                          Surat Suara Terpadu
-                        </span>
-                        <span className={`text-[11px] font-extrabold px-2.5 py-0.5 rounded-full ${
-                          isAllCategoriesChosen ? 'bg-emerald-500/10 text-emerald-600 border border-emerald-500/30' : 'bg-brand-primary/10 text-brand-primary border border-brand-primary/30'
-                        }`}>
-                          {Object.keys(selectedByCat).length} dari {categoriesList.length} Kategori Dipilih
-                        </span>
-                      </div>
-                      <p className="text-[11px] text-text-muted mt-0.5">
-                        {isAllCategoriesChosen 
-                          ? 'Lengkap (OSIS & MPK)! Silakan klik tombol untuk konfirmasi.' 
-                          : `Pilih 1 paslon untuk setiap kategori (${categoriesList.filter(cat => !selectedByCat[cat]).join(', ')} belum dipilih).`}
-                      </p>
-                    </div>
-
+                  {isLastCategory ? (
                     <Button
                       onClick={handleProceedToConfirmation}
                       disabled={!isAllCategoriesChosen || isPending}
                       className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
                     >
-                      <span>Lanjut Konfirmasi</span>
+                      <span>Lanjut ke Konfirmasi Akhir</span>
                       <ArrowRight className="w-4 h-4 ml-1.5" />
                     </Button>
-                  </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        if (!currentSelected) return;
+                        setCategoryStep(categoryStep + 1);
+                      }}
+                      disabled={!currentSelected || isPending}
+                      className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
+                    >
+                      <span>Lanjut ke {categoriesList[categoryStep + 1] === 'MPK' ? '🏛️ MPK' : 'Tahap 2'}</span>
+                      <ArrowRight className="w-4 h-4 ml-1.5" />
+                    </Button>
+                  )}
                 </div>
-              )}
+              </div>
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* STATE 3: BALLOT CONFIRMATION */}
           {boothState === 'CONFIRMATION' && activeVoter && (Object.keys(selectedByCat).length > 0 || selectedCandidate) && (

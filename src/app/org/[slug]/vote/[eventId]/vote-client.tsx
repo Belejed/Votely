@@ -76,6 +76,7 @@ export default function VoteClientPage({ event, candidates, slug, orgName, logoU
 
   // Selected candidate per category: { "OSIS": cand, "MPK": cand }
   const [selectedByCat, setSelectedByCat] = useState<Record<string, CandidateProps>>({});
+  const [categoryStep, setCategoryStep] = useState<number>(0);
 
   const handleSelectCandidateForCategory = (candidate: CandidateProps) => {
     const cat = candidate.category || 'OSIS';
