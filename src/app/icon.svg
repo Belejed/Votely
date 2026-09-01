@@ -1,30 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
   <defs>
-    <linearGradient id="votelyGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#E11D48" />
-      <stop offset="50%" stop-color="#9333EA" />
-      <stop offset="100%" stop-color="#7C3AED" />
+    <linearGradient id="votelyCoral" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FF385C" />
+      <stop offset="100%" stop-color="#E11D48" />
     </linearGradient>
-    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#7C3AED" flood-opacity="0.35" />
+    <filter id="softGlow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="10" stdDeviation="16" flood-color="#E11D48" flood-opacity="0.3" />
     </filter>
   </defs>
-  
-  <!-- Outer Rounded Square with Signature Votely Gradient -->
-  <rect x="32" y="32" width="448" height="448" rx="112" fill="url(#votelyGrad)" filter="url(#shadow)" />
-  
-  <!-- Crisp White Ballot Box & Checkmark Icon (Lucide Vote) -->
-  <g fill="none" stroke="#FFFFFF" stroke-width="32" stroke-linecap="round" stroke-linejoin="round">
-    <!-- Ballot Box Frame -->
-    <path d="M120 200 H392 V400 C392 417.673 377.673 432 360 432 H152 C134.327 432 120 417.673 120 400 Z" />
-    
-    <!-- Top Slot Horizon -->
-    <path d="M120 200 L168 136 H344 L392 200" />
-    
-    <!-- Ballot Card Entering Slot with Checkmark -->
-    <path d="M180 88 H332 V240 H180 Z" fill="#FFFFFF" fill-opacity="0.15" />
-    
-    <!-- Checkmark inside Ballot -->
-    <path d="M220 160 L248 188 L296 136" stroke="#FFFFFF" stroke-width="36" />
-  </g>
+
+  <!-- 1. Outer Coral Squircle Background -->
+  <rect x="32" y="32" width="448" height="448" rx="128" fill="url(#votelyCoral)" filter="url(#softGlow)" />
+
+  <!-- 2. The Official Votely Voting Kiosk & Checkmark Mark -->
+  <!-- Base Horizontal Platform -->
+  <rect x="120" y="356" width="272" height="34" rx="17" fill="#FFFFFF" />
+
+  <!-- Arched Voting Chamber / Booth Body -->
+  <rect x="156" y="160" width="200" height="196" rx="48" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" />
+
+  <!-- White Checkmark in Center -->
+  <path d="M216 260 L248 292 L300 236" fill="none" stroke="#FFFFFF" stroke-width="34" stroke-linecap="round" stroke-linejoin="round" />
 </svg>
