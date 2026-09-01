@@ -166,21 +166,21 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
     const templateData = [
       {
         'Nama Lengkap': 'Ahmad Fauzi',
-        'NIS / NIK': '212210001',
+        'Student ID': '212210001',
         'Kelas': '12 MIPA 1',
-        'Jurusan': 'MIPA'
+        'Departemen': 'MIPA'
       },
       {
         'Nama Lengkap': 'Siti Nurhaliza',
-        'NIS / NIK': '212210002',
+        'Student ID': '212210002',
         'Kelas': '12 IPS 2',
-        'Jurusan': 'IPS'
+        'Departemen': 'IPS'
       },
       {
         'Nama Lengkap': 'Budi Santoso',
-        'NIS / NIK': '212210003',
+        'Student ID': '212210003',
         'Kelas': '11 MIPA 2',
-        'Jurusan': 'MIPA'
+        'Departemen': 'MIPA'
       }
     ];
 
@@ -189,10 +189,10 @@ export default function VotersClientPage({ initialVoters, slug, activeEventName 
       
       // Auto-size column widths for professional feel
       ws['!cols'] = [
-        { wch: 25 }, // Nama
-        { wch: 18 }, // NIS / NIK
-        { wch: 15 }, // Kelas
-        { wch: 18 }  // Jurusan
+        { wch: 25 }, // Nama Lengkap
+        { wch: 20 }, // Student ID
+        { wch: 16 }, // Kelas
+        { wch: 20 }  // Departemen
       ];
 
       const wb = XLSX.utils.book_new();
