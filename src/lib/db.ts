@@ -1,8 +1,15 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://vvvabdtgomzbyzjgkgiw.supabase.co';
-const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ2dmFiZHRnb216Ynl6amdrZ2l3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODI2NDQ4NDEsImV4cCI6MjA5ODIyMDg0MX0.-KCJNeNmahvdRTxn59jw2jml7ez3mPtW62stvwqqz38';
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  console.warn(
+    '[Votely] WARNING: NEXT_PUBLIC_SUPABASE_URL atau NEXT_PUBLIC_SUPABASE_ANON_KEY belum diisi di .env! ' +
+    'Pastikan sudah diisi sebelum deploy ke production.'
+  );
+}
 
 export const supabase: SupabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
   auth: {
@@ -319,13 +326,33 @@ class SupabaseModelAdapter {
         const { data } = await supabase.from('organizations').select('*').eq('id', res.organizationId).maybeSingle();
         res.organization = objectToCamel(data);
       } else if (rel === 'candidates' && res.id) {
-        const { data } = await supabase.from('candidates').select('*').eq('event_id', res.id).order('number', { ascending: true });
+        const { data } = await supabase
+          .from('candidates')
+          .select('*')
+          .eq('event_id', res.id)
+          .order('number', { ascending: true });
         let candidates = objectToCamel(data || []);
-        
-        // Populate vote counts for each candidate
-        candidates = await Promise.all(candidates.map(async (c: any) => {
-          const { count } = await supabase.from('votes').select('*', { count: 'exact', head: true }).eq('candidate_id', c.id);
-          return { ...c, _count: { votes: count || 0 }, votes: [] };
+
+        // ✅ OPTIMIZED: Single batch query for all vote counts (was N+1 queries before)
+        const candidateIds = candidates.map((c: any) => c.id);
+        const voteCounts: Record<string, number> = {};
+
+        if (candidateIds.length > 0) {
+          const { data: voteData } = await supabase
+            .from('votes')
+            .select('candidate_id')
+            .in('candidate_id', candidateIds);
+
+          (voteData || []).forEach((v: any) => {
+            const cId = v.candidate_id;
+            voteCounts[cId] = (voteCounts[cId] || 0) + 1;
+          });
+        }
+
+        candidates = candidates.map((c: any) => ({
+          ...c,
+          _count: { votes: voteCounts[c.id] || 0 },
+          votes: [],
         }));
         res.candidates = candidates;
       } else if (rel === 'boothSetting' && res.id) {

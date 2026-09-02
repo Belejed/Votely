@@ -141,6 +141,8 @@ model Event {
   participations    EventVoterParticipation[]
 
   @@map("events")
+  @@index([organizationId])
+  @@index([organizationId, status])
 }
 
 model OfflineBoothSetting {
@@ -176,6 +178,8 @@ model Candidate {
   votes       Vote[]
 
   @@map("candidates")
+  @@index([eventId])
+  @@index([eventId, category])
 }
 
 // Votes are logged anonymously (if configured) by not linking back to the Voter.
@@ -192,6 +196,9 @@ model Vote {
   ipAddress   String?   @map("ip_address")
 
   @@map("votes")
+  @@index([eventId])
+  @@index([candidateId])
+  @@index([eventId, candidateId])
 }
 
 model EventVoterParticipation {
@@ -221,6 +228,8 @@ model AuditLog {
   createdAt      DateTime      @default(now()) @map("created_at")
 
   @@map("audit_logs")
+  @@index([organizationId])
+  @@index([organizationId, createdAt])
 }
 
 model Announcement {

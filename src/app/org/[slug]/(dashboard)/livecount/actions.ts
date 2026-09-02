@@ -18,14 +18,7 @@ export async function getLiveResultsAction(slug: string, eventId: string) {
     const event = await db.event.findUnique({
       where: { id: eventId },
       include: {
-        candidates: {
-          include: {
-            _count: {
-              select: { votes: true }
-            }
-          },
-          orderBy: { number: 'asc' }
-        }
+        candidates: true   // db.ts adapter otomatis batch-fetch vote counts per kandidat
       }
     });
 
