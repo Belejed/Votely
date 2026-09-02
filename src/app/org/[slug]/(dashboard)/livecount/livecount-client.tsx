@@ -124,9 +124,17 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
     csvContent += `Total DPT: ${totalVoters}, Total Suara Masuk: ${totalVotes}, Tingkat Partisipasi: ${turnoutPercent}%\r\n\r\n`;
     csvContent += 'No Urut,Nama Paslon,Jumlah Suara,Persentase Suara,Status\r\n';
 
+    // Per-category leaders for CSV export
+    const categoryLeaders: Record<string, string> = {};
+    const cats = Array.from(new Set(results.map((c: any) => c.category || 'OSIS')));
+    cats.forEach((cat) => {
+      const catCands = results.filter((c: any) => (c.category || 'OSIS') === cat).sort((a: any, b: any) => b.votesCount - a.votesCount);
+      if (catCands[0]?.votesCount > 0) categoryLeaders[catCands[0].id] = cat;
+    });
+
     results.forEach((c: any) => {
       const pct = totalVotes > 0 ? ((c.votesCount / totalVotes) * 100).toFixed(1) : '0.0';
-      const isLead = currentLeader?.id === c.id ? 'Perolehan Tertinggi' : '-';
+      const isLead = categoryLeaders[c.id] ? `Unggul ${categoryLeaders[c.id]}` : '-';
       csvContent += `${c.number},"${c.name}",${c.votesCount},${pct}%,${isLead}\r\n`;
     });
 
@@ -144,10 +152,6 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
 
   // Turnout calculation
   const turnoutPercent = totalVoters > 0 ? ((totalVotes / totalVoters) * 100).toFixed(1) : '0.0';
-
-  // Find leader
-  const sortedByVotes = [...results].sort((a, b) => b.votesCount - a.votesCount);
-  const currentLeader = sortedByVotes.length > 0 && sortedByVotes[0].votesCount > 0 ? sortedByVotes[0] : null;
 
   if (events.length === 0) {
     return (
@@ -295,51 +299,91 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
         </Card>
       </div>
 
-      {/* Leader Showcase banner with candidate photo */}
-      {currentLeader && (
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden bg-linear-to-r from-brand-primary/15 via-purple-500/10 to-brand-primary/5 border-2 border-brand-primary/30 p-6 rounded-3xl flex flex-col sm:flex-row sm:items-center sm:justify-between gap-6 shadow-lg"
-        >
-          <div className="absolute top-0 right-0 p-4 opacity-10 pointer-events-none">
-            <Sparkles className="w-28 h-28 text-brand-primary" />
-          </div>
+      {/* Leader Showcase — per kategori */}
+      {(() => {
+        const categoriesList = Array.from(new Set(results.map((c) => c.category || 'OSIS')));
+        const hasMultipleCategories = categoriesList.length > 1;
 
-          <div className="flex items-center gap-5 relative z-10">
-            {/* Leader Photo / Badge */}
-            {currentLeader.photoUrl ? (
-              <div className="relative shrink-0">
-                <img 
-                  src={currentLeader.photoUrl} 
-                  alt={currentLeader.name} 
-                  className="w-20 h-24 aspect-[3/4] rounded-2xl object-cover object-top border-2 border-brand-primary shadow-md" 
-                />
-                <div className="absolute -top-2 -right-2 w-7 h-7 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-md">
-                  <Award className="w-4 h-4" />
-                </div>
-              </div>
-            ) : (
-              <div className="w-20 h-24 aspect-[3/4] rounded-2xl bg-linear-to-tr from-amber-400 to-amber-600 flex flex-col items-center justify-center text-white shrink-0 shadow-md">
-                <Award className="w-8 h-8 mb-1" />
-                <span className="font-black text-xs">#{currentLeader.number}</span>
-              </div>
-            )}
+        const leaderBanners = categoriesList.map((catName) => {
+          const catResults = results
+            .filter((c) => (c.category || 'OSIS') === catName)
+            .sort((a, b) => b.votesCount - a.votesCount);
+          const catTotalVotes = catResults.reduce((s, c) => s + c.votesCount, 0);
+          const leader = catResults[0]?.votesCount > 0 ? catResults[0] : null;
+          return { catName, leader, catTotalVotes };
+        });
 
-            <div>
-              <Badge variant="warning" className="uppercase font-black tracking-wider text-[10px] px-2.5 py-0.5 flex items-center gap-1 w-fit">
-                <Crown className="w-3 h-3" /> PEROLEHAN TERTINGGI SEMENTARA
-              </Badge>
-              <h4 className="text-xl sm:text-2xl font-display font-black text-text-main mt-1.5">
-                Paslon #{currentLeader.number} — {currentLeader.name}
-              </h4>
-              <p className="text-xs text-text-muted mt-0.5">
-                Memimpin dengan <strong className="text-brand-primary">{currentLeader.votesCount} Suara</strong> ({((currentLeader.votesCount / (totalVotes || 1)) * 100).toFixed(1)}% dari total suara masuk).
-              </p>
-            </div>
+        const anyLeader = leaderBanners.some((b) => b.leader);
+        if (!anyLeader) return null;
+
+        return (
+          <div className={`grid gap-4 ${hasMultipleCategories ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-1'}`}>
+            {leaderBanners.map(({ catName, leader, catTotalVotes }) => {
+              if (!leader) return null;
+              const isMPK = catName === 'MPK';
+              return (
+                <motion.div
+                  key={catName}
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className={`relative overflow-hidden border-2 p-5 rounded-3xl flex items-center gap-5 shadow-lg ${
+                    isMPK
+                      ? 'bg-linear-to-r from-purple-500/15 via-purple-500/5 to-transparent border-purple-500/30'
+                      : 'bg-linear-to-r from-brand-primary/15 via-brand-primary/5 to-transparent border-brand-primary/30'
+                  }`}
+                >
+                  <div className="absolute top-0 right-0 p-3 opacity-10 pointer-events-none">
+                    <Sparkles className={`w-20 h-20 ${isMPK ? 'text-purple-500' : 'text-brand-primary'}`} />
+                  </div>
+
+                  {/* Photo */}
+                  {leader.photoUrl ? (
+                    <div className="relative shrink-0">
+                      <img
+                        src={leader.photoUrl}
+                        alt={leader.name}
+                        className={`w-16 h-20 aspect-[3/4] rounded-2xl object-cover object-top border-2 shadow-md ${
+                          isMPK ? 'border-purple-500' : 'border-brand-primary'
+                        }`}
+                      />
+                      <div className="absolute -top-2 -right-2 w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center shadow-md">
+                        <Award className="w-3.5 h-3.5" />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`w-16 h-20 aspect-[3/4] rounded-2xl flex flex-col items-center justify-center text-white shrink-0 shadow-md ${
+                      isMPK ? 'bg-linear-to-tr from-purple-500 to-purple-700' : 'bg-linear-to-tr from-amber-400 to-amber-600'
+                    }`}>
+                      <Award className="w-6 h-6 mb-1" />
+                      <span className="font-black text-[11px]">#{leader.number}</span>
+                    </div>
+                  )}
+
+                  {/* Info */}
+                  <div className="min-w-0 flex-1 relative z-10">
+                    <Badge
+                      variant="warning"
+                      className="uppercase font-black tracking-wider text-[10px] px-2 py-0.5 flex items-center gap-1 w-fit mb-1"
+                    >
+                      <Crown className="w-3 h-3" />
+                      {isMPK ? '🏛️ MPK' : '🗳️ OSIS'} — UNGGUL SEMENTARA
+                    </Badge>
+                    <h4 className="text-lg font-display font-black text-text-main leading-tight truncate">
+                      Paslon #{leader.number} — {leader.name}
+                    </h4>
+                    <p className="text-xs text-text-muted mt-0.5">
+                      <strong className={isMPK ? 'text-purple-600' : 'text-brand-primary'}>
+                        {leader.votesCount} Suara
+                      </strong>{' '}
+                      ({catTotalVotes > 0 ? ((leader.votesCount / catTotalVotes) * 100).toFixed(1) : '0.0'}% suara {catName})
+                    </p>
+                  </div>
+                </motion.div>
+              );
+            })}
           </div>
-        </motion.div>
-      )}
+        );
+      })()}
 
       {/* Main Candidate Cards grouped by Category */}
       {(() => {
