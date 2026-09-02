@@ -34,6 +34,7 @@ interface CandidateResultProps {
   number: number;
   name: string;
   photoUrl?: string | null;
+  category?: string | null;
   vision: string;
   mission: string;
   socialMedia: any;
@@ -340,102 +341,145 @@ export default function LiveCountClientPage({ events = [], slug, orgName }: Live
         </motion.div>
       )}
 
-      {/* Main Candidate Cards with Photo & Progress Distribution */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <BarChart3 className="w-4 h-4 text-brand-primary" />
-          <h4 className="text-sm font-black uppercase tracking-wider text-text-main">
-            Perolehan Suara Seluruh Kandidat ({results.length})
-          </h4>
-        </div>
+      {/* Main Candidate Cards grouped by Category */}
+      {(() => {
+        const categoriesList = Array.from(new Set(results.map((c) => c.category || 'OSIS')));
+        const hasMultipleCategories = categoriesList.length > 1;
 
-        {results.length === 0 ? (
-          <Card className="p-8 text-center text-text-muted text-xs font-semibold bg-card border-border-main rounded-3xl">
-            Tidak ada calon terdaftar untuk agenda ini.
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {results.map((c: any) => {
-              const percent = totalVotes > 0 ? ((c.votesCount / totalVotes) * 100).toFixed(1) : '0.0';
-              const isLeader = currentLeader?.id === c.id;
-              
+        return (
+          <div className="space-y-10">
+            {categoriesList.map((catName) => {
+              const catResults = results
+                .filter((c) => (c.category || 'OSIS') === catName)
+                .sort((a, b) => b.votesCount - a.votesCount);
+              const catTotalVotes = catResults.reduce((s, c) => s + c.votesCount, 0);
+              const catLeader = catResults[0]?.votesCount > 0 ? catResults[0] : null;
+
               return (
-                <Card key={c.id} className={`p-5 bg-card border-2 rounded-3xl space-y-4 flex flex-col justify-between transition-all shadow-xs ${
-                  isLeader ? 'border-brand-primary/60 shadow-lg shadow-brand-primary/10' : 'border-border-main'
-                }`}>
-                  <div className="space-y-4">
-                    {/* Top Row: Photo, Number Badge, Name, & Votes */}
-                    <div className="flex items-start gap-4">
-                      {/* Candidate Photo */}
-                      {c.photoUrl ? (
-                        <img 
-                          src={c.photoUrl} 
-                          alt={c.name} 
-                          className="w-18 h-24 aspect-[3/4] rounded-2xl object-cover object-top border-2 border-brand-primary/40 shadow-sm shrink-0" 
-                        />
-                      ) : (
-                        <div className="w-18 h-24 aspect-[3/4] rounded-2xl bg-brand-primary/10 text-brand-primary font-black text-lg flex flex-col items-center justify-center border border-border-main shrink-0">
-                          <User className="w-6 h-6 opacity-40 mb-1" />
-                          <span>#{c.number}</span>
+                <div key={catName} className="space-y-4">
+                  {/* Category Section Header */}
+                  {hasMultipleCategories && (
+                    <div className="flex items-center gap-3 border-b-2 border-border-main pb-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+                        catName === 'MPK' ? 'bg-purple-500/10' : 'bg-brand-primary/10'
+                      }`}>
+                        {catName === 'MPK' ? '🏛️' : '🗳️'}
+                      </div>
+                      <div>
+                        <h4 className="text-base font-black text-text-main uppercase tracking-wide">
+                          {catName === 'MPK' ? 'Kategori MPK — Pemilihan Pengurus MPK' : 'Kategori OSIS — Pemilihan Ketua & Wakil OSIS'}
+                        </h4>
+                        <p className="text-[11px] text-text-muted font-bold">
+                          {catResults.length} Paslon · {catTotalVotes} Suara Masuk
+                        </p>
+                      </div>
+                      {catLeader && (
+                        <div className="ml-auto shrink-0">
+                          <Badge variant="warning" className="text-[10px] font-black px-2.5 py-1 gap-1 flex items-center">
+                            <Award className="w-3 h-3" />
+                            UNGGUL: #{catLeader.number} {catLeader.name}
+                          </Badge>
                         </div>
                       )}
-
-                      <div className="min-w-0 flex-1 space-y-1">
-                        <div className="flex items-center justify-between gap-1">
-                          <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider">
-                            Paslon #{c.number}
-                          </span>
-                          {isLeader && (
-                            <Badge variant="warning" className="text-[9px] px-1.5 py-0.5 font-black uppercase">
-                              MEMIMPIN
-                            </Badge>
-                          )}
-                        </div>
-
-                        <h5 className="text-base font-black text-text-main leading-snug truncate">{c.name}</h5>
-                        
-                        <div className="pt-1">
-                          <span className="text-2xl font-black text-brand-primary tracking-tight block">
-                            {c.votesCount} <span className="text-xs font-bold text-text-muted">Suara</span>
-                          </span>
-                        </div>
-                      </div>
                     </div>
+                  )}
 
-                    {/* Visual Progress Bar */}
-                    <div className="space-y-1.5 bg-background/60 p-3 rounded-2xl border border-border-main">
-                      <div className="flex justify-between items-center text-xs font-bold">
-                        <span className="text-text-muted text-[11px]">Persentase Suara:</span>
-                        <span className="text-text-main font-black">{percent}%</span>
-                      </div>
-                      <div className="h-3 w-full bg-background border border-border-main rounded-full overflow-hidden">
-                        <motion.div
-                          initial={{ width: 0 }}
-                          animate={{ width: `${percent}%` }}
-                          transition={{ duration: 0.6, ease: 'easeOut' }}
-                          className={`h-full rounded-full transition-all ${
-                            isLeader 
-                              ? 'bg-linear-to-r from-brand-primary to-brand-secondary' 
-                              : 'bg-brand-primary/40'
-                          }`}
-                        />
-                      </div>
+                  {catResults.length === 0 ? (
+                    <Card className="p-8 text-center text-text-muted text-xs font-semibold bg-card border-border-main rounded-3xl">
+                      Tidak ada calon terdaftar untuk kategori ini.
+                    </Card>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {catResults.map((c: any) => {
+                        const percent = catTotalVotes > 0 ? ((c.votesCount / catTotalVotes) * 100).toFixed(1) : '0.0';
+                        const isLeader = catLeader?.id === c.id;
+
+                        return (
+                          <Card key={c.id} className={`p-5 bg-card border-2 rounded-3xl space-y-4 flex flex-col justify-between transition-all shadow-xs ${
+                            isLeader ? 'border-brand-primary/60 shadow-lg shadow-brand-primary/10' : 'border-border-main'
+                          }`}>
+                            <div className="space-y-4">
+                              <div className="flex items-start gap-4">
+                                {c.photoUrl ? (
+                                  <img
+                                    src={c.photoUrl}
+                                    alt={c.name}
+                                    className="w-18 h-24 aspect-[3/4] rounded-2xl object-cover object-top border-2 border-brand-primary/40 shadow-sm shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-18 h-24 aspect-[3/4] rounded-2xl bg-brand-primary/10 text-brand-primary font-black text-lg flex flex-col items-center justify-center border border-border-main shrink-0">
+                                    <User className="w-6 h-6 opacity-40 mb-1" />
+                                    <span>#{c.number}</span>
+                                  </div>
+                                )}
+
+                                <div className="min-w-0 flex-1 space-y-1">
+                                  <div className="flex items-center justify-between gap-1">
+                                    <div className="flex items-center gap-1.5">
+                                      <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-wider">
+                                        Paslon #{c.number}
+                                      </span>
+                                      <span className={`text-[9px] font-black px-1.5 rounded uppercase border ${
+                                        catName === 'MPK'
+                                          ? 'bg-purple-500/10 text-purple-700 border-purple-500/20'
+                                          : 'bg-brand-primary/10 text-brand-primary border-brand-primary/20'
+                                      }`}>{catName}</span>
+                                    </div>
+                                    {isLeader && (
+                                      <Badge variant="warning" className="text-[9px] px-1.5 py-0.5 font-black uppercase">
+                                        UNGGUL
+                                      </Badge>
+                                    )}
+                                  </div>
+
+                                  <h5 className="text-base font-black text-text-main leading-snug truncate">{c.name}</h5>
+
+                                  <div className="pt-1">
+                                    <span className="text-2xl font-black text-brand-primary tracking-tight block">
+                                      {c.votesCount} <span className="text-xs font-bold text-text-muted">Suara</span>
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Progress Bar (per-category percentage) */}
+                              <div className="space-y-1.5 bg-background/60 p-3 rounded-2xl border border-border-main">
+                                <div className="flex justify-between items-center text-xs font-bold">
+                                  <span className="text-text-muted text-[11px]">% Suara {catName}:</span>
+                                  <span className="text-text-main font-black">{percent}%</span>
+                                </div>
+                                <div className="h-3 w-full bg-background border border-border-main rounded-full overflow-hidden">
+                                  <motion.div
+                                    initial={{ width: 0 }}
+                                    animate={{ width: `${percent}%` }}
+                                    transition={{ duration: 0.6, ease: 'easeOut' }}
+                                    className={`h-full rounded-full transition-all ${
+                                      isLeader
+                                        ? 'bg-linear-to-r from-brand-primary to-brand-secondary'
+                                        : 'bg-brand-primary/40'
+                                    }`}
+                                  />
+                                </div>
+                              </div>
+
+                              {c.vision && (
+                                <div className="text-xs text-text-muted bg-background/40 p-2.5 rounded-xl border border-border-main">
+                                  <strong className="text-text-main text-[10px] block font-bold">Visi:</strong>
+                                  <p className="line-clamp-2 mt-0.5 text-[11px] leading-relaxed">{c.vision}</p>
+                                </div>
+                              )}
+                            </div>
+                          </Card>
+                        );
+                      })}
                     </div>
-
-                    {/* Visi Misi */}
-                    {c.vision && (
-                      <div className="text-xs text-text-muted bg-background/40 p-2.5 rounded-xl border border-border-main">
-                        <strong className="text-text-main text-[10px] block font-bold">Visi:</strong>
-                        <p className="line-clamp-2 mt-0.5 text-[11px] leading-relaxed">{c.vision}</p>
-                      </div>
-                    )}
-                  </div>
-                </Card>
+                  )}
+                </div>
               );
             })}
           </div>
-        )}
-      </div>
+        );
+      })()}
       {/* BERITA ACARA PRINT MODAL */}
       <AnimatePresence>
         {showBeritaAcara && (

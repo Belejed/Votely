@@ -18,7 +18,14 @@ export async function getLiveResultsAction(slug: string, eventId: string) {
     const event = await db.event.findUnique({
       where: { id: eventId },
       include: {
-        candidates: true
+        candidates: {
+          include: {
+            _count: {
+              select: { votes: true }
+            }
+          },
+          orderBy: { number: 'asc' }
+        }
       }
     });
 
@@ -30,31 +37,35 @@ export async function getLiveResultsAction(slug: string, eventId: string) {
       where: { organizationId: org.id }
     });
 
+    // Count unique voters who have cast at least one vote (participation-based)
+    const totalParticipants = await db.eventVoterParticipation.count({
+      where: { eventId }
+    });
+
+    // Total raw vote records (OSIS + MPK combined)
     const totalVotes = await db.vote.count({
       where: { eventId }
     });
 
     const results = (event.candidates || []).map((c: any) => {
-      const votesCount = c._count?.votes !== undefined 
-        ? c._count.votes 
-        : (c.votes?.length || 0);
-
       return {
         id: c.id,
         number: c.number,
         name: c.name,
+        category: c.category || 'OSIS',
         photoUrl: c.photoUrl || null,
         vision: c.vision || '',
         mission: c.mission || '',
         socialMedia: c.socialMedia || {},
-        votesCount: votesCount,
+        votesCount: c._count?.votes ?? 0,
       };
     });
 
     return {
       success: true,
       totalVoters,
-      totalVotes,
+      totalVotes: totalParticipants,  // unique voters who participated
+      totalRawVotes: totalVotes,       // total vote records (OSIS + MPK)
       results,
     };
   } catch (error) {

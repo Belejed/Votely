@@ -25,6 +25,7 @@ interface CandidateProps {
   id: string;
   number: number;
   name: string;
+  photoUrl?: string | null;
   category?: string | null;
   vision: string;
   mission: string;
@@ -357,72 +358,205 @@ export default function VoteClientPage({ event, candidates, slug, orgName, logoU
             </motion.div>
           )}
 
-          {/* CANDIDATE SELECT ROSTER */}
-          {voteState === 'CANDIDATES' && activeVoter && (
+          {/* CANDIDATE SELECT ROSTER — 2-screen step wizard */}
+          {voteState === 'CANDIDATES' && activeVoter && (() => {
+            const currentCatName = categoriesList[categoryStep] || 'OSIS';
+            const currentCatCandidates = candidates.filter((c) => (c.category || 'OSIS') === currentCatName);
+            const currentSelected = selectedByCat[currentCatName];
+            const isLastCategory = categoryStep === categoriesList.length - 1;
+
+            return (
             <motion.div
-              key="candidates"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="w-full max-w-4xl space-y-6"
+              key={`candidates-step-${categoryStep}`}
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="w-full max-w-4xl space-y-6 pb-8"
             >
+              {/* Multi-Step Category Indicator */}
+              {hasMultipleCategories && (
+                <div className="bg-card border-2 border-border-main p-3.5 rounded-2xl shadow-xs">
+                  <div className="flex items-center justify-between gap-2 text-xs font-black">
+                    {categoriesList.map((cat, idx) => {
+                      const isDone = Boolean(selectedByCat[cat]);
+                      const isCurrent = idx === categoryStep;
+                      return (
+                        <div key={cat} className="flex-1 flex items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setCategoryStep(idx)}
+                            className={`flex-1 py-2 px-3 rounded-xl border text-left flex items-center justify-between transition-all cursor-pointer ${
+                              isCurrent
+                                ? 'bg-brand-primary text-white border-brand-primary shadow-md'
+                                : isDone
+                                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700'
+                                : 'bg-background border-border-main text-text-muted hover:border-brand-primary/40'
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 truncate">
+                              <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black ${
+                                isCurrent ? 'bg-white text-brand-primary' : isDone ? 'bg-emerald-600 text-white' : 'bg-border-main text-text-muted'
+                              }`}>
+                                {isDone ? '✓' : idx + 1}
+                              </span>
+                              <span className="truncate">{cat === 'MPK' ? '🏛️ MPK' : '🗳️ OSIS'}</span>
+                            </div>
+                            {isDone && !isCurrent && (
+                              <span className="text-[10px] font-bold opacity-80 shrink-0">#{selectedByCat[cat].number}</span>
+                            )}
+                          </button>
+                          {idx < categoriesList.length - 1 && (
+                            <span className="text-text-muted/40 font-black">→</span>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
               <div className="text-center space-y-1">
-                <h3 className="text-2xl font-display font-extrabold text-text-main">Voter Ballot</h3>
-                <p className="text-xs text-text-muted">Logged in as: <strong>{activeVoter.name}</strong></p>
+                <Badge variant="info">
+                  {hasMultipleCategories ? `LANGKAH ${categoryStep + 1} DARI ${categoriesList.length}: ${currentCatName}` : 'SURAT SUARA DIGITAL'}
+                </Badge>
+                <h3 className="text-2xl font-display font-extrabold text-text-main">
+                  {currentCatName === 'MPK' ? '🏛️ Pemilihan Pengurus MPK' : '🗳️ Pemilihan Ketua & Wakil OSIS'}
+                </h3>
+                <p className="text-xs text-text-muted">
+                  Login sebagai: <strong>{activeVoter.name}</strong>
+                  {hasMultipleCategories && <> · Pilih 1 paslon untuk kategori <strong>{currentCatName}</strong></>}
+                </p>
               </div>
 
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {candidates.map((cand: any) => (
-                  <Card key={cand.id} hoverLift className="flex flex-col justify-between p-5 bg-card border-2 border-border-main hover:border-brand-primary/60 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl">
-                    <div className="absolute top-3 right-3 z-10 w-10 h-10 bg-brand-primary text-white flex items-center justify-center font-display font-black text-sm rounded-2xl shadow-md">
-                      #{cand.number}
-                    </div>
+              {errorMsg && (
+                <div className="p-3.5 bg-danger/10 border border-danger/20 text-danger rounded-xl text-xs font-semibold flex items-center gap-2.5">
+                  <ShieldAlert className="w-4.5 h-4.5 shrink-0" />
+                  <span>{errorMsg}</span>
+                </div>
+              )}
 
-                    <div className="space-y-3.5">
-                      {/* 3:4 Official Portrait Photo Frame */}
-                      <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
-                        {cand.photoUrl ? (
-                          <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
-                        ) : (
-                          <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
-                            <User className="w-12 h-12 opacity-40" />
-                            <span className="font-black text-sm">Paslon #{cand.number}</span>
-                          </div>
-                        )}
-                      </div>
-                      
-                      <div className="text-center pt-1">
-                        <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Kandidat Paslon #{cand.number}</span>
-                        <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
-                      </div>
-
-                      <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
-                        <div>
-                          <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
-                          <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
+              {currentCatCandidates.length === 0 ? (
+                <Card className="p-8 text-center text-text-muted text-xs font-semibold bg-card border-border-main rounded-3xl">
+                  Tidak ada paslon terdaftar untuk kategori ini.
+                </Card>
+              ) : (
+                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {currentCatCandidates.map((cand: any) => {
+                    const isSelected = currentSelected?.id === cand.id;
+                    return (
+                      <Card
+                        key={cand.id}
+                        hoverLift
+                        className={`flex flex-col justify-between p-5 bg-card border-2 transition-all rounded-3xl relative overflow-hidden shadow-sm hover:shadow-xl cursor-pointer ${
+                          isSelected
+                            ? 'border-brand-primary ring-4 ring-brand-primary/20 bg-brand-primary/5'
+                            : 'border-border-main hover:border-brand-primary/60'
+                        }`}
+                        onClick={() => handleSelectCandidateForCategory(cand)}
+                      >
+                        <div className={`absolute top-3 right-3 z-10 w-10 h-10 flex items-center justify-center font-display font-black text-sm rounded-2xl shadow-md ${
+                          isSelected ? 'bg-emerald-600 text-white' : 'bg-brand-primary text-white'
+                        }`}>
+                          {isSelected ? '✓' : `#${cand.number}`}
                         </div>
-                        {cand.mission && (
-                          <div>
-                            <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
-                            <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
 
-                    <div className="pt-4 border-t border-border-main mt-4">
-                      <Button onClick={() => handleSelectCandidate(cand)} className="w-full button-gradient font-bold h-11 text-xs shadow-md shadow-brand-primary/20" disabled={isPending}>
-                        Coblos Paslon #{cand.number}
+                        <div className="space-y-3.5">
+                          <div className="w-full aspect-[3/4] max-h-72 rounded-2xl overflow-hidden bg-background/80 border-2 border-border-main flex items-center justify-center relative shadow-xs">
+                            {cand.photoUrl ? (
+                              <img src={cand.photoUrl} alt={cand.name} className="w-full h-full object-cover object-top" />
+                            ) : (
+                              <div className="flex flex-col items-center justify-center gap-2 text-brand-primary">
+                                <User className="w-12 h-12 opacity-40" />
+                                <span className="font-black text-sm">Paslon #{cand.number}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="text-center pt-1">
+                            <div className="flex items-center justify-center gap-1.5 mb-1">
+                              <span className="text-[10px] text-brand-primary uppercase font-extrabold tracking-widest block">Paslon #{cand.number}</span>
+                              <span className="text-[9px] font-black px-1.5 rounded bg-background border border-border-main text-text-muted">{currentCatName}</span>
+                            </div>
+                            <h4 className="font-black text-lg text-text-main leading-snug">{cand.name}</h4>
+                          </div>
+
+                          <div className="space-y-2 text-xs bg-background/60 p-3 rounded-xl border border-border-main text-text-muted">
+                            <div>
+                              <strong className="text-text-main text-[11px] block font-bold">Visi:</strong>
+                              <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.vision || '—'}</p>
+                            </div>
+                            {cand.mission && (
+                              <div>
+                                <strong className="text-text-main text-[11px] block font-bold">Misi:</strong>
+                                <p className="leading-relaxed mt-0.5 line-clamp-2">{cand.mission}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t border-border-main mt-4">
+                          <Button
+                            onClick={(e) => { e.stopPropagation(); handleSelectCandidateForCategory(cand); }}
+                            className={`w-full font-bold h-11 text-xs transition-all ${
+                              isSelected ? 'bg-emerald-600 text-white shadow-md' : 'button-gradient text-white shadow-md shadow-brand-primary/20'
+                            }`}
+                            disabled={isPending}
+                          >
+                            {isSelected ? `✓ Paslon #${cand.number} Terpilih` : `Pilih Paslon #${cand.number}`}
+                          </Button>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              )}
+
+              {/* Sticky Wizard Navigation Bar */}
+              <div className="sticky bottom-6 left-0 right-0 z-40 pt-2">
+                <div className="max-w-xl mx-auto bg-card/95 backdrop-blur-md border-2 border-brand-primary rounded-2xl p-4 shadow-2xl flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-2">
+                    {hasMultipleCategories && categoryStep > 0 && (
+                      <Button variant="outline" size="sm" onClick={() => setCategoryStep(categoryStep - 1)} className="rounded-xl h-10 px-3 text-xs font-bold">
+                        ← Kembali
                       </Button>
+                    )}
+                    <div>
+                      <span className="text-xs font-black text-brand-primary block">
+                        {currentSelected ? `✓ Paslon #${currentSelected.number} (${currentCatName})` : `Belum pilih ${currentCatName}`}
+                      </span>
+                      <span className="text-[11px] text-text-muted block">
+                        {isLastCategory
+                          ? (isAllCategoriesChosen ? 'Semua kategori lengkap!' : 'Pilih paslon untuk lanjut.')
+                          : `Langkah ${categoryStep + 1} dari ${categoriesList.length}`}
+                      </span>
                     </div>
-                  </Card>
-                ))}
+                  </div>
+
+                  {isLastCategory ? (
+                    <Button
+                      onClick={handleProceedToConfirmation}
+                      disabled={!isAllCategoriesChosen}
+                      className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
+                    >
+                      Lanjut Konfirmasi <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  ) : (
+                    <Button
+                      onClick={() => { if (currentSelected) setCategoryStep(categoryStep + 1); }}
+                      disabled={!currentSelected}
+                      className="button-gradient text-xs font-black px-5 h-11 rounded-xl shadow-lg shadow-brand-primary/30 shrink-0"
+                    >
+                      Lanjut ke {categoriesList[categoryStep + 1] === 'MPK' ? '🏛️ MPK' : 'Tahap 2'} <ArrowRight className="w-4 h-4 ml-1" />
+                    </Button>
+                  )}
+                </div>
               </div>
             </motion.div>
-          )}
+            );
+          })()}
 
           {/* BALLOT CONFIRMATION */}
-          {voteState === 'CONFIRMATION' && activeVoter && selectedCandidate && (
+          {voteState === 'CONFIRMATION' && activeVoter && (Object.keys(selectedByCat).length > 0 || selectedCandidate) && (
             <motion.div
               key="confirmation"
               initial={{ scale: 0.95, opacity: 0 }}
@@ -436,21 +570,45 @@ export default function VoteClientPage({ event, candidates, slug, orgName, logoU
                 </div>
 
                 <div className="space-y-1">
-                  <h4 className="text-lg font-bold text-text-main">Submit Your Vote?</h4>
-                  <p className="text-xs text-text-muted">You are voting for Candidate #{selectedCandidate.number}:</p>
+                  <h4 className="text-lg font-bold text-text-main">Konfirmasi Suara Anda</h4>
+                  <p className="text-xs text-text-muted">
+                    {hasMultipleCategories
+                      ? 'Suara Anda untuk masing-masing kategori:'
+                      : `Anda akan memilih Paslon #${selectedCandidate?.number}:`}
+                  </p>
                 </div>
 
-                <div className="p-4 bg-background border border-border-main rounded-xl text-left">
-                  <strong className="text-text-main text-sm block">{selectedCandidate.name}</strong>
-                  <span className="text-[10px] text-text-muted mt-1 block leading-relaxed">{selectedCandidate.vision}</span>
+                <div className="space-y-2 text-left">
+                  {(hasMultipleCategories ? Object.values(selectedByCat) : (selectedCandidate ? [selectedCandidate] : [])).map((cand) => (
+                    <div key={cand.id} className="p-3 bg-background border border-border-main rounded-xl flex items-center gap-3">
+                      {cand.photoUrl ? (
+                        <img src={cand.photoUrl} alt={cand.name} className="w-10 h-14 aspect-[3/4] rounded-lg object-cover border border-border-main shrink-0" />
+                      ) : (
+                        <span className="w-10 h-14 rounded-lg bg-brand-primary/10 text-brand-primary font-black text-xs flex items-center justify-center shrink-0 border border-border-main">
+                          #{cand.number}
+                        </span>
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-[10px] text-brand-primary font-bold uppercase">Paslon #{cand.number}</span>
+                          <span className="text-[9px] font-black px-1 rounded bg-card border border-border-main text-text-muted uppercase">{cand.category || 'OSIS'}</span>
+                        </div>
+                        <strong className="text-text-main text-sm block truncate">{cand.name}</strong>
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="flex gap-2">
-                  <Button onClick={() => handleCastVote(selectedCandidate.id)} className="flex-1 button-gradient h-10" disabled={isPending}>
-                    Confirm Vote
+                  <Button
+                    onClick={hasMultipleCategories ? handleCastAllVotes : () => handleCastVote(selectedCandidate?.id || '')}
+                    className="flex-1 button-gradient h-10"
+                    disabled={isPending}
+                  >
+                    {isPending ? 'Mengirim...' : 'Ya, Kirim Suara'}
                   </Button>
                   <Button variant="secondary" onClick={() => setVoteState('CANDIDATES')} className="w-24" disabled={isPending}>
-                    Cancel
+                    Ubah
                   </Button>
                 </div>
               </Card>
