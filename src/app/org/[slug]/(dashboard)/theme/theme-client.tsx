@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState, useTransition } from 'react';
+import React, { useState, useEffect, useTransition } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -44,6 +45,7 @@ interface ThemeClientProps {
 }
 
 export default function ThemeClientPage({ organization, slug }: ThemeClientProps) {
+  const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
   // Color & workspace states
@@ -51,6 +53,18 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
   const [primaryColor, setPrimaryColor] = useState(organization.primaryColor || '#7C3AED');
   const [secondaryColor, setSecondaryColor] = useState(organization.secondaryColor || '#A78BFA');
   const [logoUrl, setLogoUrl] = useState<string | null>(organization.logoUrl || null);
+
+  // Live real-time color reflection on the page
+  useEffect(() => {
+    const root = document.documentElement;
+    if (primaryColor && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(primaryColor)) {
+      root.style.setProperty('--brand-primary', primaryColor);
+    }
+    if (secondaryColor && /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(secondaryColor)) {
+      root.style.setProperty('--brand-secondary', secondaryColor);
+      root.style.setProperty('--brand-accent', `${secondaryColor}40`);
+    }
+  }, [primaryColor, secondaryColor]);
 
   // Poster Splash Screen states
   const [posterEnabled, setPosterEnabled] = useState(organization.posterEnabled ?? false);
@@ -175,6 +189,7 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
         setStatusMsg({ type: 'danger', text: res.error });
       } else {
         setStatusMsg({ type: 'success', text: 'Tema dan pengaturan Poster Splash Screen berhasil disimpan!' });
+        router.refresh();
       }
     });
   };
@@ -243,7 +258,7 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
 
               <div className="space-y-2.5 flex-1 w-full">
                 <div className="flex flex-wrap items-center gap-2">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-brand-primary hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-primary/20">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-brand-primary hover:opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-primary/20">
                     <UploadCloud className="w-4 h-4" />
                     <span>{logoUrl ? 'Ganti File Logo' : 'Upload File Logo (PNG/JPG)'}</span>
                     <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
@@ -321,7 +336,7 @@ export default function ThemeClientPage({ organization, slug }: ThemeClientProps
                 )}
 
                 <div className="space-y-2.5 flex-1 w-full">
-                  <label className="cursor-pointer inline-flex items-center gap-2 bg-brand-primary hover:bg-purple-700 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-primary/20">
+                  <label className="cursor-pointer inline-flex items-center gap-2 bg-brand-primary hover:opacity-90 text-white text-xs font-bold px-4 py-2.5 rounded-xl transition-all shadow-md shadow-brand-primary/20">
                     <UploadCloud className="w-4 h-4" />
                     <span>{posterUrl ? 'Ganti File Poster' : 'Pilih File Poster (JPG/PNG)'}</span>
                     <input type="file" accept="image/*" onChange={handlePosterUpload} className="hidden" />

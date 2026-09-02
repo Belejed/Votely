@@ -68,9 +68,13 @@ export async function saveThemeAction(
       console.warn('Audit log failed:', auditErr);
     }
 
+    revalidatePath(`/org/${slug}`, 'layout');
     revalidatePath(`/org/${slug}/dashboard`);
     revalidatePath(`/org/${slug}/theme`);
     revalidatePath(`/org/${slug}/active-election`);
+    revalidatePath(`/org/${slug}/livecount`);
+    revalidatePath(`/org/${slug}/events`);
+    revalidatePath(`/org/${slug}/voters`);
 
     return { success: true };
   } catch (error: any) {

@@ -106,13 +106,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .button-gradient {
-  background: linear-gradient(135deg, var(--brand-primary) 0%, #6D28D9 100%);
+  background: linear-gradient(135deg, var(--brand-primary) 0%, var(--brand-secondary) 100%);
   color: #FFFFFF;
   transition: all 0.2s ease;
 }
 .button-gradient:hover {
-  background: linear-gradient(135deg, #8B5CF6 0%, var(--brand-primary) 100%);
-  box-shadow: 0 4px 15px -3px rgba(124, 58, 237, 0.4);
+  background: linear-gradient(135deg, var(--brand-secondary) 0%, var(--brand-primary) 100%);
+  box-shadow: 0 4px 15px -3px var(--brand-accent);
 }
 
 /* Mesh Background Anim */

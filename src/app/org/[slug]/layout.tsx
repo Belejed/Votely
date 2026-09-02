@@ -28,14 +28,23 @@ export default async function OrgBaseLayout({
   const secondaryColor = sanitizeColor(org.secondaryColor, '#A78BFA');
 
   return (
-    <div className="min-h-screen bg-background text-text-main relative" suppressHydrationWarning>
+    <div 
+      className="min-h-screen bg-background text-text-main relative" 
+      data-org-theme
+      style={{
+        '--brand-primary': primaryColor,
+        '--brand-secondary': secondaryColor,
+        '--brand-accent': `${secondaryColor}40`,
+      } as React.CSSProperties}
+      suppressHydrationWarning
+    >
       {/* Dynamic Brand Color Theme Injector */}
       <style dangerouslySetInnerHTML={{
         __html: `
-          :root {
-            --brand-primary: ${primaryColor};
-            --brand-secondary: ${secondaryColor};
-            --brand-accent: ${secondaryColor}40;
+          :root, html, body, [data-org-theme] {
+            --brand-primary: ${primaryColor} !important;
+            --brand-secondary: ${secondaryColor} !important;
+            --brand-accent: ${secondaryColor}40 !important;
           }
         `
       }} />

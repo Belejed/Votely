@@ -315,7 +315,7 @@ export default function ActiveElectionClient({
             {isClosed && (
               <Button
                 onClick={() => setConfirmAction('START')}
-                className="bg-brand-primary hover:bg-purple-700 text-white font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-brand-primary/20"
+                className="bg-brand-primary hover:opacity-90 text-white font-black text-xs px-4 py-2.5 rounded-xl flex items-center gap-2 shadow-lg shadow-brand-primary/20"
                 disabled={isPending}
               >
                 <RefreshCw className="w-4 h-4" />
